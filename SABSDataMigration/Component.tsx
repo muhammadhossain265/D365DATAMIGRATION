@@ -37,14 +37,15 @@ export default class Component extends React.Component<
 
   private importToCDS() {
     let { data, fields } = this.state;
-    if (data.length > 0) {
+    if (data.length > 0 && fields.length > 0) {
       data.map((item: any) => {
         var inputData = {};
         fields.map((field: IField) => {
           if (field.name && field.name != "")
             addPropertyToOobject(inputData, field.name, item[field.csvfield]);
         });
-        this._dataProvider.updateRecord("contact", inputData);
+        if (Object.keys(inputData).length > 0)
+          this._dataProvider.updateRecord("contact", inputData);
       });
     }
   }
