@@ -101,6 +101,10 @@ export function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
   return stabilizedThis.map((el) => el[0]);
 }
 
+export function getPropertyValue(obj: any, prop: string) {
+  if (obj && prop && prop != "") return obj[prop];
+}
+
 export function addPropertyToOobject(
   obj: any,
   parameter: string,

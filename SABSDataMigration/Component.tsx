@@ -5,7 +5,7 @@ import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
 import { IInputs } from "./generated/ManifestTypes";
 
 import Select from "react-select";
-import { addPropertyToOobject } from "./Utilities";
+import { addPropertyToOobject, getPropertyValue } from "./Utilities";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -21,7 +21,9 @@ export default class Component extends React.Component<
     }
     this.buttonClick = this.buttonClick.bind(this);
     this.addField = this.addField.bind(this);
+    this.removeField = this.removeField.bind(this);
     this.importToCDS = this.importToCDS.bind(this);
+    this.onChange = this.onChange.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
 
@@ -35,13 +37,32 @@ export default class Component extends React.Component<
 
   private _dataProvider: ICDSDataProvider;
 
+  private onChange(e: any, field: IField, fieldName: string) {
+    let { fields } = this.state;
+    var currentField = fields.find(
+      (fld) => getPropertyValue(fld, fieldName) == e.value
+    );
+    if (currentField)
+      alert(`This field has alredy been selected in row ${currentField.id}`);
+    else {
+      currentField = fields.find((fld) => field.id == fld.id);
+      if (currentField) addPropertyToOobject(currentField, fieldName, e.value);
+      this.setState({ fields });
+    }
+  }
+
   private importToCDS() {
     let { data, fields } = this.state;
     if (data.length > 0 && fields.length > 0) {
       data.map((item: any) => {
         var inputData = {};
         fields.map((field: IField) => {
-          if (field.name && field.name != "")
+          if (
+            field.name &&
+            field.name != "" &&
+            field.csvfield &&
+            field.csvfield != ""
+          )
             addPropertyToOobject(inputData, field.name, item[field.csvfield]);
         });
         if (Object.keys(inputData).length > 0)
@@ -50,9 +71,25 @@ export default class Component extends React.Component<
     }
   }
 
+  private removeField(field: IField) {
+    let { fields } = this.state;
+    fields = fields.filter((fld) => fld.id !== field.id);
+    var id = 1;
+    fields.map((field) => {
+      field.id = id;
+      id++;
+    });
+    this.setState({ fields });
+  }
+
   private addField() {
     let { fields } = this.state;
-    fields.push({ name: "", csvfield: "" });
+    var id = 1;
+    fields.map((field) => {
+      field.id = id;
+      id++;
+    });
+    fields.push({ id: id, name: "", csvfield: "" });
     this.setState({ fields });
   }
 
@@ -119,31 +156,46 @@ export default class Component extends React.Component<
           onFileLoaded={this.handleForce}
           parserOptions={this.papaparseOptions}
         />
-        <p>and then open the console</p>
-        <table>{fields.map((filed) => this._row())}</table>
+        <br />
+        <table width="100%">{fields.map((field) => this._row(field))}</table>
         <br />
         <button onClick={this.addField}>Add field</button>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
         <button onClick={this.importToCDS}>Iport to CDS</button>
       </div>
     );
   }
 
-  private _row() {
+  private _row(field: IField) {
     let { cdsFields, csvFields } = this.state;
 
     return (
       <tr>
         <td>Field Name: </td>
-        <td>
-          <Select options={cdsFields} />
+        <td width="25%">
+          <Select
+            options={cdsFields}
+            onChange={(e) => this.onChange(e, field, "name")}
+          />
         </td>
         <td>CSV Field: </td>
-        <td>
-          <Select options={csvFields} />
+        <td width="25%">
+          <Select
+            options={csvFields}
+            onChange={(e) => this.onChange(e, field, "csvfield")}
+            value={{ value: field.csvfield, label: field.csvfield }}
+          />
         </td>
         <td>Lookup Table Name: </td>
-        <td>
+        <td width="25%">
           <input />
+        </td>
+        <td>
+          <button onClick={() => this.removeField(field)}>Remove</button>
         </td>
       </tr>
     );
@@ -158,6 +210,7 @@ export interface IState {
 }
 
 export interface IField {
+  id: number;
   name: string;
   csvfield: string;
 }
