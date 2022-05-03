@@ -63,10 +63,11 @@ export default class Component extends React.Component<
             field.csvfield &&
             field.csvfield != ""
           )
-            addPropertyToOobject(inputData, field.name, item[field.csvfield]);
+            if (item[field.csvfield])
+              addPropertyToOobject(inputData, field.name, item[field.csvfield]);
         });
         if (Object.keys(inputData).length > 0)
-          this._dataProvider.updateRecord("contact", inputData);
+          this._dataProvider.createRecord("contact", inputData);
       });
     }
   }
