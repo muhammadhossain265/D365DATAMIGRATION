@@ -1,3 +1,6 @@
+import { IAttribute } from "./../interfaces";
+import { IChoiceItem } from "../interfaces";
+
 export default interface ICDSDataProvider {
   retrieveMultipleRecords(
     entity: string,
@@ -9,7 +12,8 @@ export default interface ICDSDataProvider {
   updateRecord: any;
   deleteRecord: any;
   createRecord: any;
-  getOptions(enity: string): any;
+  getOptions(enity: string, objecttypecode: number): Promise<IChoiceItem[]>;
+  getAttributes(entity: string): Promise<IAttribute[]>;
 
   // getAssets: Promise<any>;
 }

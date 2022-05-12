@@ -1,6 +1,8 @@
+import { IAttribute, IChoiceItem } from "./../interfaces";
 import { IInputs } from "../generated/ManifestTypes";
 
 import ICDSDataProvider from "./ICDSDataProvider";
+import { getPropertyValue } from "../Utilities";
 
 export default class CDSDataProvider implements ICDSDataProvider {
   constructor(context: ComponentFramework.Context<IInputs>) {
@@ -20,18 +22,21 @@ export default class CDSDataProvider implements ICDSDataProvider {
   //         });
   // }
 
-  getOptions(entity: string): Promise<any> {
-    return this.retrieveMultipleRecords(entity, "", true).then((result) => {
-      return result.map((item: any) => {
-        return { TypeCode: item["attributevalue"], TypeText: item["value"] };
-      });
-    });
+  getOptions(entity: string, objecttypecode: number): Promise<IChoiceItem[]> {
+    return this.retrieveMultipleRecords(entity, "", true, objecttypecode).then(
+      (result) => {
+        return result.map((item: any) => {
+          return { TypeCode: item["attributevalue"], TypeText: item["value"] };
+        });
+      }
+    );
   }
 
   async retrieveMultipleRecords(
     entity: string,
     filter?: string,
-    optionSet?: boolean
+    optionSet?: boolean,
+    objecttypecode?: number
   ): Promise<any> {
     var options: string | undefined, optionSetFetch: string;
 
@@ -44,6 +49,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
                 <attribute name='value' />
                 <filter type='and' >
                     <condition attribute='attributename' operator='eq' value= '${entity}' />
+                    <condition attribute="objecttypecode" operator="eq" value='${objecttypecode}' />
                 </filter>
             </entity>
         </fetch>`;
@@ -57,6 +63,51 @@ export default class CDSDataProvider implements ICDSDataProvider {
       options
     );
     return result.entities;
+  }
+
+  getAttributes(entity: string): Promise<IAttribute[]> {
+    var req = new XMLHttpRequest();
+    var baseUrl = this.getBaseUrl();
+
+    return new Promise(function (resolve, reject) {
+      req.open(
+        "GET",
+        baseUrl +
+          "/api/data/v9.1/EntityDefinitions(LogicalName='" +
+          entity +
+          "')/Attributes?$select=LogicalName,DisplayName,AttributeType&$filter=AttributeOf%20eq%20null",
+        true
+      );
+      req.onreadystatechange = function () {
+        if (req.readyState !== 4) return;
+        if (req.status >= 200 && req.status < 300) {
+          // If successful
+          try {
+            var result = JSON.parse(req.responseText);
+            if (parseInt(result.StatusCode) < 0) {
+              reject({
+                status: result.StatusCode,
+                statusText: result.StatusMessage,
+              });
+            }
+            resolve(result.value);
+          } catch (error) {
+            throw error;
+          }
+        } else {
+          // If failed
+          reject({
+            status: req.status,
+            statusText: req.statusText,
+          });
+        }
+      };
+      req.setRequestHeader("OData-MaxVersion", "4.0");
+      req.setRequestHeader("OData-Version", "4.0");
+      req.setRequestHeader("Accept", "application/json");
+      req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+      req.send();
+    });
   }
 
   async getEntityMetadata(entityName: string, attributes: string[]) {
@@ -81,5 +132,9 @@ export default class CDSDataProvider implements ICDSDataProvider {
   async deleteRecord(entity: string, id: string): Promise<string> {
     const result = await this.context.webAPI.deleteRecord(entity, id);
     return result.id;
+  }
+
+  getBaseUrl(): string {
+    return getPropertyValue(this.context, "page").getClientUrl();
   }
 }
