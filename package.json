@@ -10,10 +10,11 @@
     "refreshTypes": "pcf-scripts refreshTypes"
   },
   "dependencies": {
-    "@types/react-dom": "^18.0.3",
     "react-csv-reader": "^3.5.0",
     "react-dropdown": "^1.10.0",
-    "react-select": "^5.3.1"
+    "react-select": "^5.3.1",
+    "@emotion/react": "^11.8.1",
+    "@fluentui/react": "^8.67.4"
   },
   "devDependencies": {
     "@types/node": "^16.4",

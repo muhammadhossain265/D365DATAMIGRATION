@@ -26,7 +26,8 @@
     </data-set>
     <resources>
       <code path="index.ts" order="1"/>
-      <css path="css/csv.css" order="1" />
+      <css path="css/csv.css" order="1" />  
+      
       <!-- UNCOMMENT TO ADD MORE RESOURCES
       <css path="css/SABSDataMigration.css" order="1" />
       <resx path="strings/SABSDataMigration.1033.resx" version="1.0.0" />

@@ -3,6 +3,7 @@ import { IInputs } from "../generated/ManifestTypes";
 
 import ICDSDataProvider from "./ICDSDataProvider";
 import { getPropertyValue } from "../Utilities";
+import { IDropdownOption } from "@fluentui/react";
 
 export default class CDSDataProvider implements ICDSDataProvider {
   constructor(context: ComponentFramework.Context<IInputs>) {
@@ -109,6 +110,63 @@ export default class CDSDataProvider implements ICDSDataProvider {
       req.send();
     });
   }
+
+  getEntities(onlyActivities: string, supportsActivities:string):Promise<IDropdownOption[]> {
+		var req = new XMLHttpRequest();
+		var baseUrl=this.getBaseUrl();
+
+		return new Promise(function (resolve, reject) {
+			var filter="IsValidForAdvancedFind%20eq%20true%20and%20IsCustomizable/Value%20eq%20true";
+			if (onlyActivities!=="All"){
+				filter=filter+"%20and%20IsActivity%20eq%20true";
+			}
+			if (supportsActivities!=="All"){
+				filter=filter+"%20and%20HasActivities%20eq%20true";
+			}
+			req.open("GET", baseUrl + "/api/data/v9.1/EntityDefinitions?$select=LogicalName,DisplayName&$filter="+filter, true);
+			req.onreadystatechange = function () {
+				
+				if (req.readyState !== 4) return;
+				if (req.status >= 200 && req.status < 300) {
+					
+					// If successful
+					try {
+						
+						var result = JSON.parse(req.responseText);
+						if (parseInt(result.StatusCode) < 0) {
+							reject({
+								status: result.StatusCode,
+								statusText: result.StatusMessage
+							});
+						}
+
+            var options: IDropdownOption[] = [];
+            result.value.map((item: any) => {
+              options.push({key: item.LogicalName, text: item.DisplayName.UserLocalizedLabel.Label})
+            })
+
+						resolve(options);
+					}
+					catch (error) {
+						throw error;
+					}
+
+				} else {
+					// If failed
+					reject({
+						status: req.status,
+						statusText: req.statusText
+					});
+				}
+
+			};
+			req.setRequestHeader("OData-MaxVersion", "4.0");
+			req.setRequestHeader("OData-Version", "4.0");
+			req.setRequestHeader("Accept", "application/json");
+			req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+			req.send();
+		});
+	}
 
   async getEntityMetadata(entityName: string, attributes: string[]) {
     const result = await this.context.utils.getEntityMetadata(

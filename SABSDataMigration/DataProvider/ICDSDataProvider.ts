@@ -1,5 +1,6 @@
 import { IAttribute } from "./../interfaces";
 import { IChoiceItem } from "../interfaces";
+import { IDropdownOption } from "@fluentui/react";
 
 export default interface ICDSDataProvider {
   retrieveMultipleRecords(
@@ -14,6 +15,7 @@ export default interface ICDSDataProvider {
   createRecord: any;
   getOptions(enity: string, objecttypecode: number): Promise<IChoiceItem[]>;
   getAttributes(entity: string): Promise<IAttribute[]>;
+  getEntities(onlyActivities: string, supportsActivities:string): Promise<IDropdownOption[]>;
 
   // getAssets: Promise<any>;
 }

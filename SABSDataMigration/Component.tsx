@@ -8,6 +8,7 @@ import Select from "react-select";
 import { addPropertyToOobject, getPropertyValue } from "./Utilities";
 import { IAttribute, IChoice } from "./interfaces";
 import { AttributeType } from "./enums";
+import { Dropdown, DropdownMenuItemType, IDropdownOption, IDropdownStyles } from "@fluentui/react";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -41,6 +42,7 @@ export default class Component extends React.Component<
       enity: {},
       context: this.props,
       attributes: [],
+      entities: []
     };
   }
 
@@ -79,12 +81,10 @@ export default class Component extends React.Component<
         field.name &&
         field.name != "" &&
         field.csvfield &&
-        field.csvfield != "" &&
-        field.choiceDataSet &&
-        field.choiceDataSet != ""
+        field.csvfield != ""
       )
         this._dataProvider
-          .getOptions(field.choiceDataSet, enity._objectTypeCode!)
+          .getOptions(field.csvfield, enity._objectTypeCode!)
           .then((result: any) => {
             console.log(result);
           });
@@ -130,7 +130,7 @@ export default class Component extends React.Component<
       field.id = id;
       id++;
     });
-    fields.push({ id: id, name: "", csvfield: "" });
+    fields.push({ id: id, name: "", csvfield: "", targets: [] });
     this.setState({ fields });
   }
 
@@ -138,20 +138,20 @@ export default class Component extends React.Component<
     let { entityName } = this.state;
     let cdsFields: ISelectionOption[] = [];
     if (entityName) {
-      // var attributes: string[] = [];
-      // this._dataProvider
-      //   .getEntityMetadata(entityName, attributes)
-      //   .then((result) => {
-      //     console.log(result);
-      //     this.setState({ enity: result });
-      //     if (result._entityDescriptor.AttributeNames.length > 0) {
-      //       result._entityDescriptor.AttributeNames.map((field: string) => {
-      //         cdsFields.push({ value: field, label: field });
-      //       });
+      var attributes: string[] = [];
+      this._dataProvider
+        .getEntityMetadata(entityName, attributes)
+        .then((result) => {
+          console.log(result);
+          this.setState({ enity: result });
+          if (result._entityDescriptor.AttributeNames.length > 0) {
+            result._entityDescriptor.AttributeNames.map((field: string) => {
+              cdsFields.push({ value: field, label: field });
+            });
 
-      //       this.setState({ cdsFields });
-      //     }
-      //   });
+            this.setState({ cdsFields });
+          }
+        });
 
       this._dataProvider.getAttributes(entityName).then((result) => {
         console.log(result);
@@ -190,27 +190,40 @@ export default class Component extends React.Component<
   };
 
   public componentDidMount() {
-    let { context } = this.state;
-    let cdsFields: ISelectionOption[] = [];
-    this._dataProvider.getEntityMetadata("contact", []).then((result) => {
-      if (result._entityDescriptor.AttributeNames.length > 0) {
-        result._entityDescriptor.AttributeNames.map((field: string) => {
-          cdsFields.push({ value: field, label: field });
-        });
-        this.setState({ cdsFields });
-      }
-      console.log(result);
-    });
-  }
+    if (window.location.hostname != "localhost") {
+      let { context } = this.state;
+      let cdsFields: ISelectionOption[] = [];
+      this._dataProvider.getEntities('All', 'All').then(entities => {
+        this.setState({entities});
+      });
+      this._dataProvider.getEntityMetadata("contact", []).then((result) => {
+        if (result._entityDescriptor.AttributeNames.length > 0) {
+          result._entityDescriptor.AttributeNames.map((field: string) => {
+            cdsFields.push({ value: field, label: field });
+          });
+          this.setState({ cdsFields });
+        }
+        console.log(result);
+      });
+    }
+  }  
 
   public render() {
-    let { fields } = this.state;
+    let { fields, entities } = this.state;
     return (
       <div>
         <table>
           <tr>
             <td>Table Name</td>
             <td>
+            <Dropdown
+        label="Disabled example with defaultSelectedKey"
+        defaultSelectedKey="broccoli"
+        options={entities
+        }
+        disabled={false}
+        styles={dropdownStyles}
+      />
               <input
                 onChange={(value) => this.onTextChange(value, "entityName")}
               />
@@ -285,12 +298,14 @@ export interface IState {
   enity: IEntity;
   context: ComponentFramework.Context<IInputs>;
   attributes: IAttribute[];
+  entities: IDropdownOption[];
 }
 
 export interface IField {
   id: number;
   name: string;
   csvfield: string;
+  targets: string[];
   choiceDataSet?: string;
   AttributeType?: string;
 }
@@ -304,3 +319,7 @@ export interface ISelectionOption {
 export interface IEntity {
   _objectTypeCode?: number;
 }
+
+const dropdownStyles: Partial<IDropdownStyles> = {
+  dropdown: { width: 300 },
+};
