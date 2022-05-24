@@ -155,7 +155,7 @@ export default class Component extends React.Component<
   }
 
   private addFields() {
-    let { fields, cdsFields, csvFields } = this.state;
+    let { fields, cdsFields, csvFields, choices } = this.state;
     var id = 1;
     fields = [];
     if (cdsFields.length > 0 && csvFields.length > 0) {
@@ -165,15 +165,30 @@ export default class Component extends React.Component<
             cdsFld.label.replace(" ", "_").toLowerCase() == field.label
         );
         if (cdsField) {
-          fields.push({
+          var newfield = {
             id: id,
             name: cdsField.value,
             label: cdsField.label,
             csvfield: field.label,
             AttributeType: cdsField.AttributeType,
             targets: [],
-          });
+          };
+          fields.push(newfield);
           id++;
+
+          switch (cdsField.AttributeType) {
+            case AttributeType.Picklist.toString():
+              this._dataProvider
+                .getOptions(cdsField.value)
+                .then((result: any) => {
+                  var ch = choices.find(
+                    (choice) => choice.key == newfield.name
+                  );
+                  if (ch) ch.value = result;
+                  else choices.push({ key: newfield.name, value: result });
+                });
+              break;
+          }
         }
       });
     }
