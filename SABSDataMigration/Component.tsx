@@ -160,7 +160,7 @@ export default class Component extends React.Component<
       csvFields.map(field=> {
         var cdsField = cdsFields.find(cdsFld => cdsFld.label.replace(' ', '_').toLowerCase() == field.label);
         if (cdsField) {
-          fields.push({ id: id, name: cdsField.label, csvfield: field.label, targets: [] });
+          fields.push({ id: id, name: cdsField.value, csvfield: field.label, targets: [] });
         }
       });
     }
