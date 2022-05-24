@@ -1,6 +1,7 @@
 export enum AttributeType {
-  Picklist,
-  State,
-  Lookup,
-  Status,
+  Picklist = 'Picklist',
+  State = 'State',
+  Lookup = 'Lookup',
+  Status = 'Status',
+  String = 'String',
 }

@@ -5,7 +5,7 @@ import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
 import { IInputs } from "./generated/ManifestTypes";
 
 import Select from "react-select";
-import { addPropertyToOobject, getPropertyValue } from "./Utilities";
+import { addPropertyToOobject, getPicklistItemValue, getPropertyValue, setObjectProperty } from "./Utilities";
 import { IAttribute, IChoice } from "./interfaces";
 import { AttributeType } from "./enums";
 import { Dropdown, DropdownMenuItemType, IDropdownOption, IDropdownStyles } from "@fluentui/react";
@@ -22,13 +22,14 @@ export default class Component extends React.Component<
       // @ts-ignore
       entityId = Xrm.Page.data.entity._entityId.guid;
     }
-    this.buttonClick = this.buttonClick.bind(this);
+    // this.buttonClick = this.buttonClick.bind(this);
     this.onTextChange = this.onTextChange.bind(this);
     this.addField = this.addField.bind(this);
     this.removeField = this.removeField.bind(this);
     this.importToCDS = this.importToCDS.bind(this);
     this.getRelatedData = this.getRelatedData.bind(this);
     this.onChange = this.onChange.bind(this);
+    this._onChanged = this._onChanged.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
 
@@ -39,7 +40,7 @@ export default class Component extends React.Component<
       data: [],
       choices: [],
       entityName: "",
-      enity: {},
+      entity: {},
       context: this.props,
       attributes: [],
       entities: []
@@ -49,7 +50,7 @@ export default class Component extends React.Component<
   private _dataProvider: ICDSDataProvider;
 
   private onChange(e: any, field: IField, fieldName: string) {
-    let { fields } = this.state;
+    let { fields, choices } = this.state;
     var currentField = fields.find(
       (fld) => getPropertyValue(fld, fieldName) == e.value
     );
@@ -61,7 +62,23 @@ export default class Component extends React.Component<
         addPropertyToOobject(currentField, fieldName, e.value);
         if (e.AttributeType) currentField.AttributeType = e.AttributeType;
       }
-      this.setState({ fields });
+
+      switch (currentField?.AttributeType) {
+        case AttributeType.Picklist.toString():
+          this._dataProvider
+            .getOptions(field.name)
+            .then((result: any) => {
+              var ch = choices.find(choice => choice.key == field.name);
+              if (ch)
+                ch.value = result;
+              else
+                choices.push({ key: field.name, value: result });
+            });
+          break;
+
+      }
+
+      this.setState({ fields, choices });
     }
   }
 
@@ -74,7 +91,7 @@ export default class Component extends React.Component<
   }
 
   private getRelatedData() {
-    let { fields, enity } = this.state;
+    let { fields, entity: enity } = this.state;
 
     fields.map((field: IField) => {
       if (
@@ -84,7 +101,7 @@ export default class Component extends React.Component<
         field.csvfield != ""
       )
         this._dataProvider
-          .getOptions(field.csvfield, enity._objectTypeCode!)
+          .getOptions(field.name)
           .then((result: any) => {
             console.log(result);
           });
@@ -92,7 +109,7 @@ export default class Component extends React.Component<
   }
 
   private importToCDS() {
-    let { data, fields } = this.state;
+    let { data, fields, choices, entityName } = this.state;
     if (data.length > 0 && fields.length > 0) {
       data.map((item: any) => {
         var inputData = {};
@@ -104,10 +121,22 @@ export default class Component extends React.Component<
             field.csvfield != ""
           )
             if (item[field.csvfield])
-              addPropertyToOobject(inputData, field.name, item[field.csvfield]);
+              var value = item[field.csvfield];
+          if (value) {
+            switch (field.AttributeType) {
+              case AttributeType.Picklist.toString():
+                value = getPicklistItemValue(choices, field.name, value);
+                break;
+              case AttributeType.String.toString():
+                value = value.toString();
+                break;
+            }
+
+            addPropertyToOobject(inputData, field.name, value);
+          }
         });
         if (Object.keys(inputData).length > 0)
-          this._dataProvider.createRecord("contact", inputData);
+          this._dataProvider.createRecord(entityName, inputData);
       });
     }
   }
@@ -134,40 +163,40 @@ export default class Component extends React.Component<
     this.setState({ fields });
   }
 
-  private buttonClick() {
-    let { entityName } = this.state;
-    let cdsFields: ISelectionOption[] = [];
-    if (entityName) {
-      var attributes: string[] = [];
-      this._dataProvider
-        .getEntityMetadata(entityName, attributes)
-        .then((result) => {
-          console.log(result);
-          this.setState({ enity: result });
-          if (result._entityDescriptor.AttributeNames.length > 0) {
-            result._entityDescriptor.AttributeNames.map((field: string) => {
-              cdsFields.push({ value: field, label: field });
-            });
+  // private buttonClick() {
+  //   let { entityName } = this.state;
+  //   let cdsFields: ISelectionOption[] = [];
+  //   if (entityName) {
+  //     var attributes: string[] = [];
+  //     this._dataProvider
+  //       .getEntityMetadata(entityName, attributes)
+  //       .then((result) => {
+  //         console.log(result);
+  //         this.setState({ entity: result });
+  //         if (result._entityDescriptor.AttributeNames.length > 0) {
+  //           result._entityDescriptor.AttributeNames.map((field: string) => {
+  //             cdsFields.push({ value: field, label: field });
+  //           });
 
-            this.setState({ cdsFields });
-          }
-        });
+  //           this.setState({ cdsFields });
+  //         }
+  //       });
 
-      this._dataProvider.getAttributes(entityName).then((result) => {
-        console.log(result);
-        this.setState({ attributes: result });
-        result.map((item) => {
-          cdsFields.push({
-            value: item.LogicalName,
-            label: item.LogicalName,
-            AttributeType: item.AttributeType,
-          });
-        });
+  //     this._dataProvider.getAttributes(entityName).then((result) => {
+  //       console.log(result);
+  //       this.setState({ attributes: result });
+  //       result.map((item) => {
+  //         cdsFields.push({
+  //           value: item.LogicalName,
+  //           label: item.LogicalName,
+  //           AttributeType: item.AttributeType,
+  //         });
+  //       });
 
-        this.setState({ cdsFields });
-      });
-    }
-  }
+  //       this.setState({ cdsFields });
+  //     });
+  //   }
+  // }
 
   handleForce = (data: any, fileInfo: any) => {
     let csvFields: ISelectionOption[] = [];
@@ -177,6 +206,7 @@ export default class Component extends React.Component<
       fieldNames.map((fieldName) => {
         csvFields.push({ value: fieldName, label: fieldName });
       });
+
       this.setState({ data, csvFields });
     }
     console.log(data, fileInfo);
@@ -189,24 +219,33 @@ export default class Component extends React.Component<
     transformHeader: (header: any) => header.toLowerCase().replace(/\W/g, "_"),
   };
 
+  public _onChanged(item: IDropdownOption) {
+    var entityName = item.key.toString();
+    this.setState({ entityName });
+
+    this._dataProvider.getEntityMetadata(entityName, []).then((entity) => {
+      this.setState({ entity });
+      console.log(entity);
+    });
+
+    this._dataProvider.getAttributes(entityName).then(attributes => {
+      var cdsFields: ISelectionOption[] = [];
+      console.log(attributes);
+      attributes.map(attribute => {
+        cdsFields.push({ value: attribute.LogicalName, label: attribute.Label, AttributeType: attribute.AttributeType });
+      });
+      this.setState({ cdsFields });
+    });
+  }
+
   public componentDidMount() {
     if (window.location.hostname != "localhost") {
-      let { context } = this.state;
-      let cdsFields: ISelectionOption[] = [];
       this._dataProvider.getEntities('All', 'All').then(entities => {
-        this.setState({entities});
+        this.setState({ entities });
       });
-      this._dataProvider.getEntityMetadata("contact", []).then((result) => {
-        if (result._entityDescriptor.AttributeNames.length > 0) {
-          result._entityDescriptor.AttributeNames.map((field: string) => {
-            cdsFields.push({ value: field, label: field });
-          });
-          this.setState({ cdsFields });
-        }
-        console.log(result);
-      });
+
     }
-  }  
+  }
 
   public render() {
     let { fields, entities } = this.state;
@@ -216,21 +255,22 @@ export default class Component extends React.Component<
           <tr>
             <td>Table Name</td>
             <td>
-            <Dropdown
-        label="Disabled example with defaultSelectedKey"
-        defaultSelectedKey="broccoli"
-        options={entities
-        }
-        disabled={false}
-        styles={dropdownStyles}
-      />
-              <input
-                onChange={(value) => this.onTextChange(value, "entityName")}
+              <Dropdown
+                label="Disabled example with defaultSelectedKey"
+                defaultSelectedKey="broccoli"
+                options={entities
+                }
+                disabled={false}
+                styles={dropdownStyles}
+                onChanged={this._onChanged}
               />
+              {/* <input
+                onChange={(value) => this.onTextChange(value, "entityName")}
+              /> */}
             </td>
           </tr>
         </table>
-        <button onClick={this.buttonClick}>click me</button>
+        {/* <button onClick={this.buttonClick}>click me</button> */}
         <CSVReader
           cssClass="react-csv-input"
           // label="Choose file"
@@ -238,7 +278,9 @@ export default class Component extends React.Component<
           parserOptions={this.papaparseOptions}
         />
         <br />
-        <table width="100%">{fields.map((field) => this._row(field))}</table>
+        <table width="100%">
+          <tr><th>CDS Field</th><th>CSV Field</th><th>Type</th><th>More Info</th><th></th></tr>
+          {fields.map((field) => this._row(field))}</table>
         <br />
         <button onClick={this.addField}>Add field</button>
         <br />
@@ -249,7 +291,7 @@ export default class Component extends React.Component<
         <button onClick={this.getRelatedData}>Get Related Data</button>
         <br />
         <br />
-        <button onClick={this.importToCDS}>Iport to CDS</button>
+        <button onClick={this.importToCDS}>Import to CDS</button>
       </div>
     );
   }
@@ -259,14 +301,14 @@ export default class Component extends React.Component<
 
     return (
       <tr>
-        <td>Field Name: </td>
+        {/* <td>Field Name: </td> */}
         <td width="25%">
           <Select
             options={cdsFields}
             onChange={(e) => this.onChange(e, field, "name")}
           />
         </td>
-        <td>CSV Field: </td>
+        {/* <td>CSV Field: </td> */}
         <td width="25%">
           <Select
             options={csvFields}
@@ -274,9 +316,9 @@ export default class Component extends React.Component<
             value={{ value: field.csvfield, label: field.csvfield }}
           />
         </td>
-        <td>Type:</td>
+        {/* <td>Type:</td> */}
         <td>{field.AttributeType ? field.AttributeType : ""}</td>
-        <td>Lookup Table Name: </td>
+        {/* <td>Lookup Table Name: </td> */}
         <td width="25%">
           <input />
         </td>
@@ -295,7 +337,7 @@ export interface IState {
   data: any;
   choices: IChoice[];
   entityName: string;
-  enity: IEntity;
+  entity: any;
   context: ComponentFramework.Context<IInputs>;
   attributes: IAttribute[];
   entities: IDropdownOption[];

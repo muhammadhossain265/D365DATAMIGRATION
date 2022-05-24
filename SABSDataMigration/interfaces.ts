@@ -12,5 +12,6 @@ export interface IChoiceItem {
 
 export interface IAttribute {
   LogicalName: string;
+  Label: string;
   AttributeType: string;
 }

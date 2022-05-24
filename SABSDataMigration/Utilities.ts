@@ -1,5 +1,6 @@
 import { text } from "stream/consumers";
 import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
+import { IChoice } from "./interfaces";
 export function GetValue(value: any): any {
   if (value != undefined && value != null) return value;
 }
@@ -79,9 +80,9 @@ export function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key
 ): (
-  a: { [key in Key]: number | string },
-  b: { [key in Key]: number | string }
-) => number {
+    a: { [key in Key]: number | string },
+    b: { [key in Key]: number | string }
+  ) => number {
   return order === "desc"
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -124,4 +125,19 @@ export function setObjectProperty(
   value: any
 ) {
   object[propertyName] = value;
+}
+
+export function getPicklistItemValue(choices: IChoice[], pickList: string, choiceText: string): string {
+  let choice = choices.find(choice => choice.key == pickList);
+  if (choice) {
+    var choiceItem = choice.value.find(item => item.TypeText == choiceText)
+    if (choiceItem)
+      return choiceItem.TypeCode;
+    else
+      alert(`Choice Item ${choiceText} does not exist in Choice ${pickList}`);
+  }
+  else
+    alert(`Choice ${pickList} does not exist`);
+
+  return '';
 }

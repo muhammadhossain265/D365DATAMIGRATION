@@ -23,7 +23,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
   //         });
   // }
 
-  getOptions(entity: string, objecttypecode: number): Promise<IChoiceItem[]> {
+  getOptions(entity: string, objecttypecode?: number): Promise<IChoiceItem[]> {
     return this.retrieveMultipleRecords(entity, "", true, objecttypecode).then(
       (result) => {
         return result.map((item: any) => {
@@ -44,13 +44,16 @@ export default class CDSDataProvider implements ICDSDataProvider {
     options = filter;
 
     if (optionSet) {
+      var objTypeTag = '';
+      if (objecttypecode)
+      objTypeTag = `<condition attribute="objecttypecode" operator="eq" value='${objecttypecode}' />`;
       var optionSetFetch = `<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
             <entity name='stringmap' >
                 <attribute name='attributevalue' />
                 <attribute name='value' />
                 <filter type='and' >
                     <condition attribute='attributename' operator='eq' value= '${entity}' />
-                    <condition attribute="objecttypecode" operator="eq" value='${objecttypecode}' />
+                    ${objTypeTag}
                 </filter>
             </entity>
         </fetch>`;
@@ -91,7 +94,11 @@ export default class CDSDataProvider implements ICDSDataProvider {
                 statusText: result.StatusMessage,
               });
             }
-            resolve(result.value);
+            let attributes: IAttribute[] = [];
+            result.value.map((attribute: any) => {
+              attributes.push({LogicalName: attribute.LogicalName, Label: attribute.DisplayName.UserLocalizedLabel.Label, AttributeType: attribute.AttributeType })
+            })
+            resolve(attributes);
           } catch (error) {
             throw error;
           }

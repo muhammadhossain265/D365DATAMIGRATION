@@ -13,7 +13,7 @@ export default interface ICDSDataProvider {
   updateRecord: any;
   deleteRecord: any;
   createRecord: any;
-  getOptions(enity: string, objecttypecode: number): Promise<IChoiceItem[]>;
+  getOptions(enity: string, objecttypecode?: number): Promise<IChoiceItem[]>;
   getAttributes(entity: string): Promise<IAttribute[]>;
   getEntities(onlyActivities: string, supportsActivities:string): Promise<IDropdownOption[]>;
 
