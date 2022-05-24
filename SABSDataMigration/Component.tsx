@@ -152,6 +152,22 @@ export default class Component extends React.Component<
     this.setState({ fields });
   }
 
+  private addFields() {
+    let { fields, cdsFields, csvFields } = this.state;
+    var id = 1;
+    fields = [];
+    if (cdsFields.length > 0 && csvFields.length > 0) {
+      csvFields.map(field=> {
+        var cdsField = cdsFields.find(cdsFld => cdsFld.label.replace(' ', '_').toLowerCase() == field.label);
+        if (cdsField) {
+          fields.push({ id: id, name: cdsField.label, csvfield: field.label, targets: [] });
+        }
+      });
+    }
+
+    this.setState({fields});
+  }
+
   private addField() {
     let { fields } = this.state;
     var id = 1;
@@ -208,6 +224,8 @@ export default class Component extends React.Component<
       });
 
       this.setState({ data, csvFields });
+
+      this.addFields();
     }
     console.log(data, fileInfo);
   };
@@ -235,8 +253,9 @@ export default class Component extends React.Component<
         cdsFields.push({ value: attribute.LogicalName, label: attribute.Label, AttributeType: attribute.AttributeType });
       });
       this.setState({ cdsFields });
+      this.addFields();
     });
-  }
+  }  
 
   public componentDidMount() {
     if (window.location.hostname != "localhost") {
@@ -288,7 +307,7 @@ export default class Component extends React.Component<
         <br />
         <br />
         <br />
-        <button onClick={this.getRelatedData}>Get Related Data</button>
+        {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
         <br />
         <br />
         <button onClick={this.importToCDS}>Import to CDS</button>
