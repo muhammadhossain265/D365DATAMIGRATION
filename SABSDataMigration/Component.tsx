@@ -5,10 +5,20 @@ import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
 import { IInputs } from "./generated/ManifestTypes";
 
 import Select from "react-select";
-import { addPropertyToOobject, getPicklistItemValue, getPropertyValue, setObjectProperty } from "./Utilities";
+import {
+  addPropertyToOobject,
+  getPicklistItemValue,
+  getPropertyValue,
+  setObjectProperty,
+} from "./Utilities";
 import { IAttribute, IChoice } from "./interfaces";
 import { AttributeType } from "./enums";
-import { Dropdown, DropdownMenuItemType, IDropdownOption, IDropdownStyles } from "@fluentui/react";
+import {
+  Dropdown,
+  DropdownMenuItemType,
+  IDropdownOption,
+  IDropdownStyles,
+} from "@fluentui/react";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -43,7 +53,7 @@ export default class Component extends React.Component<
       entity: {},
       context: this.props,
       attributes: [],
-      entities: []
+      entities: [],
     };
   }
 
@@ -65,17 +75,12 @@ export default class Component extends React.Component<
 
       switch (currentField?.AttributeType) {
         case AttributeType.Picklist.toString():
-          this._dataProvider
-            .getOptions(field.name)
-            .then((result: any) => {
-              var ch = choices.find(choice => choice.key == field.name);
-              if (ch)
-                ch.value = result;
-              else
-                choices.push({ key: field.name, value: result });
-            });
+          this._dataProvider.getOptions(field.name).then((result: any) => {
+            var ch = choices.find((choice) => choice.key == field.name);
+            if (ch) ch.value = result;
+            else choices.push({ key: field.name, value: result });
+          });
           break;
-
       }
 
       this.setState({ fields, choices });
@@ -100,11 +105,9 @@ export default class Component extends React.Component<
         field.csvfield &&
         field.csvfield != ""
       )
-        this._dataProvider
-          .getOptions(field.name)
-          .then((result: any) => {
-            console.log(result);
-          });
+        this._dataProvider.getOptions(field.name).then((result: any) => {
+          console.log(result);
+        });
     });
   }
 
@@ -120,8 +123,7 @@ export default class Component extends React.Component<
             field.csvfield &&
             field.csvfield != ""
           )
-            if (item[field.csvfield])
-              var value = item[field.csvfield];
+            if (item[field.csvfield]) var value = item[field.csvfield];
           if (value) {
             switch (field.AttributeType) {
               case AttributeType.Picklist.toString():
@@ -157,15 +159,26 @@ export default class Component extends React.Component<
     var id = 1;
     fields = [];
     if (cdsFields.length > 0 && csvFields.length > 0) {
-      csvFields.map(field=> {
-        var cdsField = cdsFields.find(cdsFld => cdsFld.label.replace(' ', '_').toLowerCase() == field.label);
+      csvFields.map((field) => {
+        var cdsField = cdsFields.find(
+          (cdsFld) =>
+            cdsFld.label.replace(" ", "_").toLowerCase() == field.label
+        );
         if (cdsField) {
-          fields.push({ id: id, name: cdsField.value, csvfield: field.label, targets: [] });
+          fields.push({
+            id: id,
+            name: cdsField.value,
+            label: cdsField.label,
+            csvfield: field.label,
+            AttributeType: cdsField.AttributeType,
+            targets: [],
+          });
+          id++;
         }
       });
     }
 
-    this.setState({fields});
+    this.setState({ fields });
   }
 
   private addField() {
@@ -175,7 +188,7 @@ export default class Component extends React.Component<
       field.id = id;
       id++;
     });
-    fields.push({ id: id, name: "", csvfield: "", targets: [] });
+    fields.push({ id: id, name: "", label: "", csvfield: "", targets: [] });
     this.setState({ fields });
   }
 
@@ -246,23 +259,26 @@ export default class Component extends React.Component<
       console.log(entity);
     });
 
-    this._dataProvider.getAttributes(entityName).then(attributes => {
+    this._dataProvider.getAttributes(entityName).then((attributes) => {
       var cdsFields: ISelectionOption[] = [];
       console.log(attributes);
-      attributes.map(attribute => {
-        cdsFields.push({ value: attribute.LogicalName, label: attribute.Label, AttributeType: attribute.AttributeType });
+      attributes.map((attribute) => {
+        cdsFields.push({
+          value: attribute.LogicalName,
+          label: attribute.Label,
+          AttributeType: attribute.AttributeType,
+        });
       });
       this.setState({ cdsFields });
       this.addFields();
     });
-  }  
+  }
 
   public componentDidMount() {
     if (window.location.hostname != "localhost") {
-      this._dataProvider.getEntities('All', 'All').then(entities => {
+      this._dataProvider.getEntities("All", "All").then((entities) => {
         this.setState({ entities });
       });
-
     }
   }
 
@@ -272,13 +288,11 @@ export default class Component extends React.Component<
       <div>
         <table>
           <tr>
-            <td>Table Name</td>
             <td>
               <Dropdown
-                label="Disabled example with defaultSelectedKey"
+                label="Table"
                 defaultSelectedKey="broccoli"
-                options={entities
-                }
+                options={entities}
                 disabled={false}
                 styles={dropdownStyles}
                 onChanged={this._onChanged}
@@ -298,8 +312,15 @@ export default class Component extends React.Component<
         />
         <br />
         <table width="100%">
-          <tr><th>CDS Field</th><th>CSV Field</th><th>Type</th><th>More Info</th><th></th></tr>
-          {fields.map((field) => this._row(field))}</table>
+          <tr>
+            <th>CDS Field</th>
+            <th>CSV Field</th>
+            <th>Type</th>
+            <th>More Info</th>
+            <th></th>
+          </tr>
+          {fields.map((field) => this._row(field))}
+        </table>
         <br />
         <button onClick={this.addField}>Add field</button>
         <br />
@@ -325,6 +346,7 @@ export default class Component extends React.Component<
           <Select
             options={cdsFields}
             onChange={(e) => this.onChange(e, field, "name")}
+            value={{ value: field.name, label: field.label }}
           />
         </td>
         {/* <td>CSV Field: </td> */}
@@ -365,6 +387,7 @@ export interface IState {
 export interface IField {
   id: number;
   name: string;
+  label: string;
   csvfield: string;
   targets: string[];
   choiceDataSet?: string;
