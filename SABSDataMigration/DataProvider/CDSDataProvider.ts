@@ -2,8 +2,9 @@ import { IAttribute, IChoiceItem } from "./../interfaces";
 import { IInputs } from "../generated/ManifestTypes";
 
 import ICDSDataProvider from "./ICDSDataProvider";
-import { getPropertyValue } from "../Utilities";
+import { getPropertyValue, setObjectProperty } from "../Utilities";
 import { IDropdownOption } from "@fluentui/react";
+import { AttributeType } from "../enums";
 
 export default class CDSDataProvider implements ICDSDataProvider {
   constructor(context: ComponentFramework.Context<IInputs>) {
@@ -79,7 +80,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
         baseUrl +
           "/api/data/v9.1/EntityDefinitions(LogicalName='" +
           entity +
-          "')/Attributes?$select=LogicalName,DisplayName,AttributeType&$filter=AttributeOf%20eq%20null",
+          "')/Attributes?&$filter=AttributeOf%20eq%20null",
         true
       );
       req.onreadystatechange = function () {
@@ -96,7 +97,13 @@ export default class CDSDataProvider implements ICDSDataProvider {
             }
             let attributes: IAttribute[] = [];
             result.value.map((attribute: any) => {
-              attributes.push({LogicalName: attribute.LogicalName, Label: attribute.DisplayName.UserLocalizedLabel.Label, AttributeType: attribute.AttributeType })
+              let attrb: IAttribute = {LogicalName: attribute.LogicalName, Label: attribute.DisplayName.UserLocalizedLabel.Label, AttributeType: attribute.AttributeType };
+              switch (attribute.AttributeType.toString()) {
+                case AttributeType.Lookup.toString: 
+                setObjectProperty(attrb, 'Targets', attrb.Targets);
+                break;
+              }
+              attributes.push(attrb);
             })
             resolve(attributes);
           } catch (error) {

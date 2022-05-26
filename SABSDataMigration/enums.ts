@@ -4,4 +4,5 @@ export enum AttributeType {
   Lookup = 'Lookup',
   Status = 'Status',
   String = 'String',
+  Customer = 'Customer'
 }

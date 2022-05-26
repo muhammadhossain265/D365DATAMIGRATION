@@ -11,7 +11,7 @@ export default interface ICDSDataProvider {
   retrieveRecord(entity: string, id: string): Promise<any>;
   getEntityMetadata(entityName: string, attributes: string[]): Promise<any>;
   updateRecord: any;
-  deleteRecord: any;
+  deleteRecord(entity: string, id: string): any;
   createRecord: any;
   getOptions(enity: string, objecttypecode?: number): Promise<IChoiceItem[]>;
   getAttributes(entity: string): Promise<IAttribute[]>;

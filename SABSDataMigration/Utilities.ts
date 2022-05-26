@@ -1,5 +1,9 @@
+import { IColumn } from "@fluentui/react";
 import { text } from "stream/consumers";
+import { IField } from "./Component";
 import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
+import { AttributeType } from "./enums";
+import { FieldType } from "./FieldType";
 import { IChoice } from "./interfaces";
 export function GetValue(value: any): any {
   if (value != undefined && value != null) return value;
@@ -140,4 +144,34 @@ export function getPicklistItemValue(choices: IChoice[], pickList: string, choic
     alert(`Choice ${pickList} does not exist`);
 
   return '';
+}
+
+export function parseObj(obj: any, files: IField[]) {
+  let objOut: any = {};
+  files.map(field => {
+    objOut[field.name] = obj[field.name]
+    switch (field.AttributeType) {
+      case AttributeType.Picklist.toString(): 
+      objOut[field.name + 'text'] = getChoiceFieldValue(obj, field.name);
+    }
+  });
+
+  return objOut;
+}
+
+export function getGridColumns(fields: IField[]): IColumn[] {
+  var minWidth = 1400/fields.length;
+  return fields.map((field) => {
+    var fieldName = field.name;
+    switch (field.AttributeType) {
+      case AttributeType.Picklist.toString(): 
+      fieldName = field.name + 'text';
+    }
+    return {
+      key: fieldName,
+      fieldName: fieldName,
+      name: field.label,
+      minWidth: minWidth,
+    };
+  });
 }

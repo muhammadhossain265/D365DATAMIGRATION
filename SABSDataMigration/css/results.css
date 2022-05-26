@@ -1,0 +1,28 @@
+* {
+    box-sizing: border-box;
+    font-family: "Helvetica", sans-serif;
+}
+
+.total {
+    background: blue;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.succeeded {
+    background: green;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.failed {
+    background: red;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+}

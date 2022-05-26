@@ -1,0 +1,37 @@
+{
+    "AttributeType": "String",
+    "AttributeTypeName": {
+        "Value": "StringType"
+    },
+    "Description": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+            {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Type the name of the bank",
+                "LanguageCode": 1033
+            }
+        ]
+    },
+    "DisplayName": {
+        "@odata.type": "Microsoft.Dynamics.CRM.Label",
+        "LocalizedLabels": [
+            {
+                "@odata.type": "Microsoft.Dynamics.CRM.LocalizedLabel",
+                "Label": "Bank Name",
+                "LanguageCode": 1033
+            }
+        ]
+    },
+    "RequiredLevel": {
+        "Value": "None",
+        "CanBeChanged": true,
+        "ManagedPropertyLogicalName": "canmodifyrequirementlevelsettings"
+    },
+    "SchemaName": "new_BankName",
+    "@odata.type": "Microsoft.Dynamics.CRM.StringAttributeMetadata",
+    "FormatName": {
+        "Value": "Text"
+    },
+    "MaxLength": 100
+}

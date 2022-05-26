@@ -7,18 +7,23 @@ import { IInputs } from "./generated/ManifestTypes";
 import Select from "react-select";
 import {
   addPropertyToOobject,
+  getGridColumns,
   getPicklistItemValue,
   getPropertyValue,
   setObjectProperty,
 } from "./Utilities";
-import { IAttribute, IChoice } from "./interfaces";
+import { IAttribute, IChoice, ILookup } from "./interfaces";
 import { AttributeType } from "./enums";
 import {
+  DetailsList,
   Dropdown,
   DropdownMenuItemType,
+  IColumn,
   IDropdownOption,
   IDropdownStyles,
 } from "@fluentui/react";
+import ICDS from "./DataProvider/ICDSD";
+import CDS from "./DataProvider/CDS";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -40,24 +45,34 @@ export default class Component extends React.Component<
     this.getRelatedData = this.getRelatedData.bind(this);
     this.onChange = this.onChange.bind(this);
     this._onChanged = this._onChanged.bind(this);
+    this.clearTable = this.clearTable.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
+    this._cds = new CDS(props);
 
     this.state = {
+      process: 'Add',
       fields: [],
+      noofitems: 0,
+      noofitemssucceeded: 0,
+      noofitemsfailed: 0,
       cdsFields: [],
       csvFields: [],
       data: [],
       choices: [],
+      lookups: [],
       entityName: "",
       entity: {},
       context: this.props,
       attributes: [],
       entities: [],
+      columns: [],
+      items: []
     };
   }
 
   private _dataProvider: ICDSDataProvider;
+  private _cds: ICDS;
 
   private onChange(e: any, field: IField, fieldName: string) {
     let { fields, choices } = this.state;
@@ -111,8 +126,30 @@ export default class Component extends React.Component<
     });
   }
 
+  private clearTable() {
+    let { entityName, entity, noofitemssucceeded, noofitemsfailed } = this.state;
+    this.setState({ process: 'Delete' });
+    noofitemssucceeded = 0;
+    this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+      this.setState({ noofitems: items.length });
+      items.map((item: any) => {
+        this._dataProvider.deleteRecord(entityName, item[entity._primaryIdAttribute]).then((result: any) => {
+          noofitemssucceeded++;
+          this.setState({ noofitemssucceeded });
+          console.log(result);
+        });
+      })
+    })
+  }
+
   private importToCDS() {
-    let { data, fields, choices, entityName } = this.state;
+    let { data, fields, choices, entityName, noofitems, noofitemssucceeded, noofitemsfailed } = this.state;
+
+    let columns = getGridColumns(fields);
+
+    this.setState({ process: 'Add', columns });
+    noofitemssucceeded = 0;
+    noofitemsfailed = 0;
     if (data.length > 0 && fields.length > 0) {
       data.map((item: any) => {
         var inputData = {};
@@ -138,7 +175,23 @@ export default class Component extends React.Component<
           }
         });
         if (Object.keys(inputData).length > 0)
-          this._dataProvider.createRecord(entityName, inputData);
+          this._dataProvider.createRecord(entityName, inputData).then((success: any) => {
+            console.log(success);
+            noofitemssucceeded++;
+            this.setState({ noofitemssucceeded });
+
+            if (noofitems == noofitemssucceeded + noofitemsfailed) {
+              // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+              //   console.log(items);
+              //   this.setState({items});
+              // });
+
+              this._cds.getItems(entityName, fields).then(items => {
+                console.log(items);
+                this.setState({ items });
+              });
+            }
+          });
       });
     }
   }
@@ -155,7 +208,7 @@ export default class Component extends React.Component<
   }
 
   private addFields() {
-    let { fields, cdsFields, csvFields, choices } = this.state;
+    let { fields, cdsFields, csvFields, choices, lookups } = this.state;
     var id = 1;
     fields = [];
     if (cdsFields.length > 0 && csvFields.length > 0) {
@@ -187,6 +240,20 @@ export default class Component extends React.Component<
                   if (ch) ch.value = result;
                   else choices.push({ key: newfield.name, value: result });
                 });
+              break;
+
+            case AttributeType.Lookup.toString():
+              if (cdsField.Targets && cdsField.Targets.length > 0) {
+                this._dataProvider
+                  .retrieveMultipleRecords(cdsField.Targets[0])
+                  .then((result: any) => {
+                    var lkup = lookups.find(
+                      (lookup) => lookup.key == newfield.name
+                    );
+                    if (lkup) lkup.value = result;
+                    else lookups.push({ key: newfield.name, value: result });
+                  });
+              }
               break;
           }
         }
@@ -251,7 +318,7 @@ export default class Component extends React.Component<
         csvFields.push({ value: fieldName, label: fieldName });
       });
 
-      this.setState({ data, csvFields });
+      this.setState({ data, csvFields, noofitems: data.length });
 
       this.addFields();
     }
@@ -282,6 +349,7 @@ export default class Component extends React.Component<
           value: attribute.LogicalName,
           label: attribute.Label,
           AttributeType: attribute.AttributeType,
+          Targets: attribute.Targets
         });
       });
       this.setState({ cdsFields });
@@ -298,9 +366,52 @@ export default class Component extends React.Component<
   }
 
   public render() {
-    let { fields, entities } = this.state;
+    let { fields, entities, noofitems, noofitemssucceeded, noofitemsfailed, items, columns, process } = this.state;
     return (
       <div>
+        <table width={'100%'}>
+          <tr>
+            <th>
+              Total Number of Items to {process}
+            </th>
+            <th>
+              Succeeded
+            </th>
+            <th>
+              Failed
+            </th>
+          </tr>
+          <tr>
+            <td className="total">
+              {noofitems}
+            </td>
+            <td className="succeeded">
+              {noofitemssucceeded}
+            </td>
+            <td className="failed">
+              {noofitemsfailed}
+            </td>
+          </tr>
+        </table>
+        <DetailsList
+          items={items}
+          compact={true}
+          columns={columns}
+        // onRenderItemColumn={this._renderItemColumn}
+        // selectionMode={SelectionMode.multiple}
+        // getKey={this._getKey}
+        // setKey="multiple"
+        // layoutMode={DetailsListLayoutMode.justified}
+        // isHeaderVisible={true}
+        // selection={this._selection}
+        // selectionPreservedOnEmptyClick={true}
+        // onItemInvoked={this._onItemInvoked}
+        // enterModalSelectionOnTouch={true}
+        // ariaLabelForSelectionColumn="Toggle selection"
+        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+        // checkButtonAriaLabel="select row"
+        // onRenderDetailsFooter={this._onRenderDetailsFooter}
+        />
         <table>
           <tr>
             <td>
@@ -346,7 +457,8 @@ export default class Component extends React.Component<
         {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
         <br />
         <br />
-        <button onClick={this.importToCDS}>Import to CDS</button>
+        <button onClick={this.importToCDS}>Import to CDS</button> &nbsp;&nbsp;
+        <button onClick={this.clearTable}>Clear Table</button>
       </div>
     );
   }
@@ -387,16 +499,23 @@ export default class Component extends React.Component<
 }
 
 export interface IState {
+  process: string;
   fields: IField[];
+  noofitemssucceeded: number;
+  noofitemsfailed: number;
+  noofitems: number;
   cdsFields: ISelectionOption[];
   csvFields: ISelectionOption[];
   data: any;
   choices: IChoice[];
+  lookups: ILookup[];
   entityName: string;
   entity: any;
   context: ComponentFramework.Context<IInputs>;
   attributes: IAttribute[];
   entities: IDropdownOption[];
+  items: any;
+  columns: IColumn[];
 }
 
 export interface IField {
@@ -413,6 +532,7 @@ export interface ISelectionOption {
   value: string;
   label: string;
   AttributeType?: string;
+  Targets?: string[];
 }
 
 export interface IEntity {
