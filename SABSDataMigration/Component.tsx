@@ -8,6 +8,7 @@ import Select from "react-select";
 import {
   addPropertyToOobject,
   getGridColumns,
+  getLookupFieldValue,
   getPicklistItemValue,
   getPropertyValue,
   setObjectProperty,
@@ -51,7 +52,7 @@ export default class Component extends React.Component<
     this._cds = new CDS(props);
 
     this.state = {
-      process: 'Add',
+      process: "Add",
       fields: [],
       noofitems: 0,
       noofitemssucceeded: 0,
@@ -67,7 +68,7 @@ export default class Component extends React.Component<
       attributes: [],
       entities: [],
       columns: [],
-      items: []
+      items: [],
     };
   }
 
@@ -127,27 +128,39 @@ export default class Component extends React.Component<
   }
 
   private clearTable() {
-    let { entityName, entity, noofitemssucceeded, noofitemsfailed } = this.state;
-    this.setState({ process: 'Delete' });
+    let { entityName, entity, noofitemssucceeded, noofitemsfailed } =
+      this.state;
+    this.setState({ process: "Delete" });
     noofitemssucceeded = 0;
-    this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+    this._dataProvider.retrieveMultipleRecords(entityName).then((items) => {
       this.setState({ noofitems: items.length });
       items.map((item: any) => {
-        this._dataProvider.deleteRecord(entityName, item[entity._primaryIdAttribute]).then((result: any) => {
-          noofitemssucceeded++;
-          this.setState({ noofitemssucceeded });
-          console.log(result);
-        });
-      })
-    })
+        this._dataProvider
+          .deleteRecord(entityName, item[entity._primaryIdAttribute])
+          .then((result: any) => {
+            noofitemssucceeded++;
+            this.setState({ noofitemssucceeded });
+            console.log(result);
+          });
+      });
+    });
   }
 
   private importToCDS() {
-    let { data, fields, choices, entityName, noofitems, noofitemssucceeded, noofitemsfailed } = this.state;
+    let {
+      data,
+      fields,
+      choices,
+      lookups,
+      entityName,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+    } = this.state;
 
     let columns = getGridColumns(fields);
 
-    this.setState({ process: 'Add', columns });
+    this.setState({ process: "Add", columns });
     noofitemssucceeded = 0;
     noofitemsfailed = 0;
     if (data.length > 0 && fields.length > 0) {
@@ -161,37 +174,44 @@ export default class Component extends React.Component<
             field.csvfield != ""
           )
             if (item[field.csvfield]) var value = item[field.csvfield];
+          var fieldName = field.name;
           if (value) {
             switch (field.AttributeType) {
               case AttributeType.Picklist.toString():
-                value = getPicklistItemValue(choices, field.name, value);
+                value = getPicklistItemValue(choices, fieldName, value);
+                break;
+              case AttributeType.Lookup.toString():
+                value = getLookupFieldValue(lookups, fieldName, value);
+                fieldName += "@odata.bind";
                 break;
               case AttributeType.String.toString():
                 value = value.toString();
                 break;
             }
 
-            addPropertyToOobject(inputData, field.name, value);
+            addPropertyToOobject(inputData, fieldName, value);
           }
         });
         if (Object.keys(inputData).length > 0)
-          this._dataProvider.createRecord(entityName, inputData).then((success: any) => {
-            console.log(success);
-            noofitemssucceeded++;
-            this.setState({ noofitemssucceeded });
+          this._dataProvider
+            .createRecord(entityName, inputData)
+            .then((success: any) => {
+              console.log(success);
+              noofitemssucceeded++;
+              this.setState({ noofitemssucceeded });
 
-            if (noofitems == noofitemssucceeded + noofitemsfailed) {
-              // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
-              //   console.log(items);
-              //   this.setState({items});
-              // });
+              if (noofitems == noofitemssucceeded + noofitemsfailed) {
+                // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+                //   console.log(items);
+                //   this.setState({items});
+                // });
 
-              this._cds.getItems(entityName, fields).then(items => {
-                console.log(items);
-                this.setState({ items });
-              });
-            }
-          });
+                this._cds.getItems(entityName, fields).then((items) => {
+                  console.log(items);
+                  this.setState({ items });
+                });
+              }
+            });
       });
     }
   }
@@ -244,14 +264,26 @@ export default class Component extends React.Component<
 
             case AttributeType.Lookup.toString():
               if (cdsField.Targets && cdsField.Targets.length > 0) {
+                var entityName = "";
+                if (cdsField.Targets.length > 0)
+                  entityName = cdsField.Targets[0];
                 this._dataProvider
-                  .retrieveMultipleRecords(cdsField.Targets[0])
+                  .retrieveMultipleRecords(entityName)
                   .then((result: any) => {
-                    var lkup = lookups.find(
-                      (lookup) => lookup.key == newfield.name
-                    );
-                    if (lkup) lkup.value = result;
-                    else lookups.push({ key: newfield.name, value: result });
+                    this._dataProvider
+                      .getEntityMetadata(entityName, [])
+                      .then((entity) => {
+                        var lkup = lookups.find(
+                          (lookup) => lookup.key == newfield.name
+                        );
+                        if (lkup) lkup.value = result;
+                        else
+                          lookups.push({
+                            key: newfield.name,
+                            value: result,
+                            entity,
+                          });
+                      });
                   });
               }
               break;
@@ -273,41 +305,6 @@ export default class Component extends React.Component<
     fields.push({ id: id, name: "", label: "", csvfield: "", targets: [] });
     this.setState({ fields });
   }
-
-  // private buttonClick() {
-  //   let { entityName } = this.state;
-  //   let cdsFields: ISelectionOption[] = [];
-  //   if (entityName) {
-  //     var attributes: string[] = [];
-  //     this._dataProvider
-  //       .getEntityMetadata(entityName, attributes)
-  //       .then((result) => {
-  //         console.log(result);
-  //         this.setState({ entity: result });
-  //         if (result._entityDescriptor.AttributeNames.length > 0) {
-  //           result._entityDescriptor.AttributeNames.map((field: string) => {
-  //             cdsFields.push({ value: field, label: field });
-  //           });
-
-  //           this.setState({ cdsFields });
-  //         }
-  //       });
-
-  //     this._dataProvider.getAttributes(entityName).then((result) => {
-  //       console.log(result);
-  //       this.setState({ attributes: result });
-  //       result.map((item) => {
-  //         cdsFields.push({
-  //           value: item.LogicalName,
-  //           label: item.LogicalName,
-  //           AttributeType: item.AttributeType,
-  //         });
-  //       });
-
-  //       this.setState({ cdsFields });
-  //     });
-  //   }
-  // }
 
   handleForce = (data: any, fileInfo: any) => {
     let csvFields: ISelectionOption[] = [];
@@ -339,21 +336,39 @@ export default class Component extends React.Component<
     this._dataProvider.getEntityMetadata(entityName, []).then((entity) => {
       this.setState({ entity });
       console.log(entity);
-    });
 
-    this._dataProvider.getAttributes(entityName).then((attributes) => {
-      var cdsFields: ISelectionOption[] = [];
-      console.log(attributes);
-      attributes.map((attribute) => {
-        cdsFields.push({
-          value: attribute.LogicalName,
-          label: attribute.Label,
-          AttributeType: attribute.AttributeType,
-          Targets: attribute.Targets
+      this._dataProvider.getAttributes(entityName).then((attributes) => {
+        var cdsFields: ISelectionOption[] = [];
+        console.log(attributes);
+        attributes.map((attribute) => {
+          cdsFields.push({
+            value: attribute.LogicalName,
+            label: attribute.Label,
+            AttributeType: attribute.AttributeType,
+            Targets: attribute.Targets,
+          });
         });
+
+        var sabsid = cdsFields.find((field) => field.label == "SABSID");
+        if (!sabsid) {
+          this._dataProvider
+            .addAttribute(entity._entityDescriptor.Id.guid, {
+              name: "sabs_sabsid",
+              label: "SABSID",
+            })
+            .then((result: any) => {
+              console.log(result);
+              cdsFields.push({
+                value: "sabs_sabsid",
+                label: "SABSID",
+                AttributeType: "String",
+                Targets: [],
+              });
+            });
+        }
+        this.setState({ cdsFields });
+        this.addFields();
       });
-      this.setState({ cdsFields });
-      this.addFields();
     });
   }
 
@@ -366,51 +381,48 @@ export default class Component extends React.Component<
   }
 
   public render() {
-    let { fields, entities, noofitems, noofitemssucceeded, noofitemsfailed, items, columns, process } = this.state;
+    let {
+      fields,
+      entities,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      items,
+      columns,
+      process,
+    } = this.state;
     return (
       <div>
-        <table width={'100%'}>
-          <tr>
-            <th>
-              Total Number of Items to {process}
-            </th>
-            <th>
-              Succeeded
-            </th>
-            <th>
-              Failed
-            </th>
+        <table width={"100%"}>
+          <tr className="header">
+            <th>Total Number of Items to {process}</th>
+            <th>Succeeded</th>
+            <th>Failed</th>
           </tr>
           <tr>
-            <td className="total">
-              {noofitems}
-            </td>
-            <td className="succeeded">
-              {noofitemssucceeded}
-            </td>
-            <td className="failed">
-              {noofitemsfailed}
-            </td>
+            <td className="total">{noofitems}</td>
+            <td className="succeeded">{noofitemssucceeded}</td>
+            <td className="failed">{noofitemsfailed}</td>
           </tr>
         </table>
         <DetailsList
           items={items}
           compact={true}
           columns={columns}
-        // onRenderItemColumn={this._renderItemColumn}
-        // selectionMode={SelectionMode.multiple}
-        // getKey={this._getKey}
-        // setKey="multiple"
-        // layoutMode={DetailsListLayoutMode.justified}
-        // isHeaderVisible={true}
-        // selection={this._selection}
-        // selectionPreservedOnEmptyClick={true}
-        // onItemInvoked={this._onItemInvoked}
-        // enterModalSelectionOnTouch={true}
-        // ariaLabelForSelectionColumn="Toggle selection"
-        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-        // checkButtonAriaLabel="select row"
-        // onRenderDetailsFooter={this._onRenderDetailsFooter}
+          // onRenderItemColumn={this._renderItemColumn}
+          // selectionMode={SelectionMode.multiple}
+          // getKey={this._getKey}
+          // setKey="multiple"
+          // layoutMode={DetailsListLayoutMode.justified}
+          // isHeaderVisible={true}
+          // selection={this._selection}
+          // selectionPreservedOnEmptyClick={true}
+          // onItemInvoked={this._onItemInvoked}
+          // enterModalSelectionOnTouch={true}
+          // ariaLabelForSelectionColumn="Toggle selection"
+          // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+          // checkButtonAriaLabel="select row"
+          // onRenderDetailsFooter={this._onRenderDetailsFooter}
         />
         <table>
           <tr>
@@ -427,15 +439,17 @@ export default class Component extends React.Component<
                 onChange={(value) => this.onTextChange(value, "entityName")}
               /> */}
             </td>
+            <td>
+              <CSVReader
+                cssClass="react-csv-input"
+                // label="Choose file"
+                onFileLoaded={this.handleForce}
+                parserOptions={this.papaparseOptions}
+              />
+            </td>
           </tr>
         </table>
         {/* <button onClick={this.buttonClick}>click me</button> */}
-        <CSVReader
-          cssClass="react-csv-input"
-          // label="Choose file"
-          onFileLoaded={this.handleForce}
-          parserOptions={this.papaparseOptions}
-        />
         <br />
         <table width="100%">
           <tr>
@@ -452,11 +466,7 @@ export default class Component extends React.Component<
         <br />
         <br />
         <br />
-        <br />
-        <br />
         {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
-        <br />
-        <br />
         <button onClick={this.importToCDS}>Import to CDS</button> &nbsp;&nbsp;
         <button onClick={this.clearTable}>Clear Table</button>
       </div>
@@ -485,10 +495,12 @@ export default class Component extends React.Component<
           />
         </td>
         {/* <td>Type:</td> */}
-        <td>{field.AttributeType ? field.AttributeType : ""}</td>
+        <td style={{ textAlign: "center" }}>
+          {field.AttributeType ? field.AttributeType : ""}
+        </td>
         {/* <td>Lookup Table Name: </td> */}
-        <td width="25%">
-          <input />
+        <td style={{ textAlign: "center", width: "20%" }}>
+          {field.targets ? field.targets.join(",") : ""}
         </td>
         <td>
           <button onClick={() => this.removeField(field)}>Remove</button>
@@ -519,11 +531,11 @@ export interface IState {
 }
 
 export interface IField {
-  id: number;
+  id?: number;
   name: string;
   label: string;
-  csvfield: string;
-  targets: string[];
+  csvfield?: string;
+  targets?: string[];
   choiceDataSet?: string;
   AttributeType?: string;
 }

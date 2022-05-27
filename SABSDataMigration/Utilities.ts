@@ -4,7 +4,7 @@ import { IField } from "./Component";
 import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
 import { AttributeType } from "./enums";
 import { FieldType } from "./FieldType";
-import { IChoice } from "./interfaces";
+import { IChoice, ILookup } from "./interfaces";
 export function GetValue(value: any): any {
   if (value != undefined && value != null) return value;
 }
@@ -84,9 +84,9 @@ export function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key
 ): (
-    a: { [key in Key]: number | string },
-    b: { [key in Key]: number | string }
-  ) => number {
+  a: { [key in Key]: number | string },
+  b: { [key in Key]: number | string }
+) => number {
   return order === "desc"
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -131,28 +131,51 @@ export function setObjectProperty(
   object[propertyName] = value;
 }
 
-export function getPicklistItemValue(choices: IChoice[], pickList: string, choiceText: string): string {
-  let choice = choices.find(choice => choice.key == pickList);
+export function getPicklistItemValue(
+  choices: IChoice[],
+  pickList: string,
+  choiceText: string
+): string {
+  let choice = choices.find((choice) => choice.key == pickList);
   if (choice) {
-    var choiceItem = choice.value.find(item => item.TypeText == choiceText)
-    if (choiceItem)
-      return choiceItem.TypeCode;
+    var choiceItem = choice.value.find((item) => item.TypeText == choiceText);
+    if (choiceItem) return choiceItem.TypeCode;
     else
       alert(`Choice Item ${choiceText} does not exist in Choice ${pickList}`);
-  }
-  else
-    alert(`Choice ${pickList} does not exist`);
+  } else alert(`Choice ${pickList} does not exist`);
 
-  return '';
+  return "";
+}
+
+export function getLookupFieldValue(
+  lookups: ILookup[],
+  key: string,
+  value: string
+): string {
+  let lookup = lookups.find((lookup) => lookup.key == key);
+  if (lookup) {
+    var itm = lookup.value.find((item: any) => item.sabs_sabsid == value);
+    if (itm)
+      return `/${lookup.entity._entitySetName}(${
+        itm[lookup.entity._primaryIdAttribute]
+      })`;
+    else alert(`Lookup Item ${value} does not exist in Choice ${key}`);
+  } else alert(`Lookup ${key} does not exist`);
+
+  return "";
 }
 
 export function parseObj(obj: any, files: IField[]) {
   let objOut: any = {};
-  files.map(field => {
-    objOut[field.name] = obj[field.name]
+  files.map((field) => {
+    objOut[field.name] = obj[field.name];
     switch (field.AttributeType) {
-      case AttributeType.Picklist.toString(): 
-      objOut[field.name + 'text'] = getChoiceFieldValue(obj, field.name);
+      case AttributeType.Picklist.toString():
+        objOut[field.name + "text"] = getChoiceFieldValue(obj, field.name);
+        break;
+      case AttributeType.Lookup.toString():
+        _setLookupFieldValue(objOut, obj, field.name, field.name);
+        break;
     }
   });
 
@@ -160,12 +183,12 @@ export function parseObj(obj: any, files: IField[]) {
 }
 
 export function getGridColumns(fields: IField[]): IColumn[] {
-  var minWidth = 1400/fields.length;
+  var minWidth = 1400 / fields.length;
   return fields.map((field) => {
     var fieldName = field.name;
     switch (field.AttributeType) {
-      case AttributeType.Picklist.toString(): 
-      fieldName = field.name + 'text';
+      case AttributeType.Picklist.toString():
+        fieldName = field.name + "text";
     }
     return {
       key: fieldName,

@@ -9,6 +9,7 @@
     font-size: 30px;
     font-weight: bold;
     text-align: center;
+    width: 33.33%;
 }
 
 .succeeded {
@@ -17,6 +18,7 @@
     font-size: 30px;
     font-weight: bold;
     text-align: center;
+    width: 33.33%;
 }
 
 .failed {
@@ -25,4 +27,12 @@
     font-size: 30px;
     font-weight: bold;
     text-align: center;
+    width: 33.33%;
+}
+
+.header {
+    background: #3498DB;
+    color: white;
+    font-weight: bold;
+    font-size: 30px;
 }

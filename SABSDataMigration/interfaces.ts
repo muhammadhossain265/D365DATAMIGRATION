@@ -8,6 +8,7 @@ export interface IChoice {
 export interface ILookup {
   key: string;
   value: any;
+  entity: any;
 }
 
 export interface IChoiceItem {
