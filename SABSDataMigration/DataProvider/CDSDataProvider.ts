@@ -131,7 +131,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
     });
   }
 
-  addAttribute(entity: string, field: IField): Promise<IAttribute[]> {
+  addAttribute(entity: string, field: IField): Promise<boolean> {
     var xhr = new XMLHttpRequest();
     var baseUrl = this.getBaseUrl();
 
@@ -188,33 +188,8 @@ export default class CDSDataProvider implements ICDSDataProvider {
       xhr.onreadystatechange = function () {
         if (xhr.readyState !== 4) return;
         if (xhr.status >= 200 && xhr.status < 300) {
-          // If successful
-          try {
-            var result = JSON.parse(xhr.responseText);
-            if (parseInt(result.StatusCode) < 0) {
-              reject({
-                status: result.StatusCode,
-                statusText: result.StatusMessage,
-              });
-            }
-            let attributes: IAttribute[] = [];
-            result.value.map((attribute: any) => {
-              let attrb: IAttribute = {
-                LogicalName: attribute.LogicalName,
-                Label: attribute.DisplayName.UserLocalizedLabel.Label,
-                AttributeType: attribute.AttributeType,
-              };
-              switch (attribute.AttributeType.toString()) {
-                case AttributeType.Lookup.toString:
-                  setObjectProperty(attrb, "Targets", attrb.Targets);
-                  break;
-              }
-              attributes.push(attrb);
-            });
-            resolve(attributes);
-          } catch (error) {
-            throw error;
-          }
+          // If successful         
+            resolve(true);
         } else {
           // If failed
           reject({

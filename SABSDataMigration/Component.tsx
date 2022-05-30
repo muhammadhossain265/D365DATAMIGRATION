@@ -25,6 +25,7 @@ import {
 } from "@fluentui/react";
 import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
+import { entities } from "./Data";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -66,7 +67,7 @@ export default class Component extends React.Component<
       entity: {},
       context: this.props,
       attributes: [],
-      entities: [],
+      entities: entities,
       columns: [],
       items: [],
     };
@@ -329,6 +330,10 @@ export default class Component extends React.Component<
     transformHeader: (header: any) => header.toLowerCase().replace(/\W/g, "_"),
   };
 
+  private setAttributes() {
+
+  }
+
   public _onChanged(item: IDropdownOption) {
     var entityName = item.key.toString();
     this.setState({ entityName });
@@ -365,19 +370,21 @@ export default class Component extends React.Component<
                 Targets: [],
               });
             });
+          this.setState({ cdsFields });
         }
-        this.setState({ cdsFields });
+        else
+          this.setState({ cdsFields });
         this.addFields();
       });
     });
   }
 
   public componentDidMount() {
-    if (window.location.hostname != "localhost") {
-      this._dataProvider.getEntities("All", "All").then((entities) => {
-        this.setState({ entities });
-      });
-    }
+    // if (window.location.hostname != "localhost") {
+    //   this._dataProvider.getEntities("All", "All").then((entities) => {
+    //     this.setState({ entities });
+    //   });
+    // }
   }
 
   public render() {
@@ -409,20 +416,20 @@ export default class Component extends React.Component<
           items={items}
           compact={true}
           columns={columns}
-          // onRenderItemColumn={this._renderItemColumn}
-          // selectionMode={SelectionMode.multiple}
-          // getKey={this._getKey}
-          // setKey="multiple"
-          // layoutMode={DetailsListLayoutMode.justified}
-          // isHeaderVisible={true}
-          // selection={this._selection}
-          // selectionPreservedOnEmptyClick={true}
-          // onItemInvoked={this._onItemInvoked}
-          // enterModalSelectionOnTouch={true}
-          // ariaLabelForSelectionColumn="Toggle selection"
-          // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-          // checkButtonAriaLabel="select row"
-          // onRenderDetailsFooter={this._onRenderDetailsFooter}
+        // onRenderItemColumn={this._renderItemColumn}
+        // selectionMode={SelectionMode.multiple}
+        // getKey={this._getKey}
+        // setKey="multiple"
+        // layoutMode={DetailsListLayoutMode.justified}
+        // isHeaderVisible={true}
+        // selection={this._selection}
+        // selectionPreservedOnEmptyClick={true}
+        // onItemInvoked={this._onItemInvoked}
+        // enterModalSelectionOnTouch={true}
+        // ariaLabelForSelectionColumn="Toggle selection"
+        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+        // checkButtonAriaLabel="select row"
+        // onRenderDetailsFooter={this._onRenderDetailsFooter}
         />
         <table>
           <tr>
