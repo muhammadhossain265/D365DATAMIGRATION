@@ -165,6 +165,19 @@ export function getLookupFieldValue(
   return "";
 }
 
+export function getBooleanFieldValue(obj: any, fieldname: string) {
+  var value = obj[fieldname + "@OData.Community.Display.V1.FormattedValue"];
+  if (value) return value;
+  return "No";
+}
+
+export function getBooleanFieldKey(value: string) {
+  if (value && value.length > 0) {
+    if (value == "Yes") return true;
+    return false;
+  }
+}
+
 export function parseObj(obj: any, files: IField[]) {
   let objOut: any = {};
   files.map((field) => {
@@ -172,6 +185,9 @@ export function parseObj(obj: any, files: IField[]) {
     switch (field.AttributeType) {
       case AttributeType.Picklist.toString():
         objOut[field.name + "text"] = getChoiceFieldValue(obj, field.name);
+        break;
+      case AttributeType.Boolean.toString():
+        objOut[field.name] = getChoiceFieldValue(obj, field.name);
         break;
       case AttributeType.Lookup.toString():
         _setLookupFieldValue(objOut, obj, field.name, field.name);

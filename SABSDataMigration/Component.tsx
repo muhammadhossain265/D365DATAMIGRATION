@@ -7,6 +7,7 @@ import { IInputs } from "./generated/ManifestTypes";
 import Select from "react-select";
 import {
   addPropertyToOobject,
+  getBooleanFieldKey,
   getGridColumns,
   getLookupFieldValue,
   getPicklistItemValue,
@@ -129,10 +130,17 @@ export default class Component extends React.Component<
   }
 
   private clearTable() {
-    let { entityName, entity, noofitemssucceeded, noofitemsfailed } =
-      this.state;
+    let {
+      entityName,
+      entity,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      fields,
+    } = this.state;
     this.setState({ process: "Delete" });
     noofitemssucceeded = 0;
+    noofitemsfailed = 0;
     this._dataProvider.retrieveMultipleRecords(entityName).then((items) => {
       this.setState({ noofitems: items.length });
       items.map((item: any) => {
@@ -141,7 +149,12 @@ export default class Component extends React.Component<
           .then((result: any) => {
             noofitemssucceeded++;
             this.setState({ noofitemssucceeded });
-            console.log(result);
+            if (noofitems == noofitemssucceeded + noofitemsfailed) {
+              this._cds.getItems(entityName, fields).then((items) => {
+                console.log(items);
+                this.setState({ items });
+              });
+            }
           });
       });
     });
@@ -187,6 +200,9 @@ export default class Component extends React.Component<
                 break;
               case AttributeType.String.toString():
                 value = value.toString();
+                break;
+              case AttributeType.Boolean.toString():
+                value = getBooleanFieldKey(value.toString());
                 break;
             }
 
@@ -330,9 +346,7 @@ export default class Component extends React.Component<
     transformHeader: (header: any) => header.toLowerCase().replace(/\W/g, "_"),
   };
 
-  private setAttributes() {
-
-  }
+  private setAttributes() {}
 
   public _onChanged(item: IDropdownOption) {
     var entityName = item.key.toString();
@@ -371,9 +385,7 @@ export default class Component extends React.Component<
               });
             });
           this.setState({ cdsFields });
-        }
-        else
-          this.setState({ cdsFields });
+        } else this.setState({ cdsFields });
         this.addFields();
       });
     });
@@ -416,20 +428,20 @@ export default class Component extends React.Component<
           items={items}
           compact={true}
           columns={columns}
-        // onRenderItemColumn={this._renderItemColumn}
-        // selectionMode={SelectionMode.multiple}
-        // getKey={this._getKey}
-        // setKey="multiple"
-        // layoutMode={DetailsListLayoutMode.justified}
-        // isHeaderVisible={true}
-        // selection={this._selection}
-        // selectionPreservedOnEmptyClick={true}
-        // onItemInvoked={this._onItemInvoked}
-        // enterModalSelectionOnTouch={true}
-        // ariaLabelForSelectionColumn="Toggle selection"
-        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-        // checkButtonAriaLabel="select row"
-        // onRenderDetailsFooter={this._onRenderDetailsFooter}
+          // onRenderItemColumn={this._renderItemColumn}
+          // selectionMode={SelectionMode.multiple}
+          // getKey={this._getKey}
+          // setKey="multiple"
+          // layoutMode={DetailsListLayoutMode.justified}
+          // isHeaderVisible={true}
+          // selection={this._selection}
+          // selectionPreservedOnEmptyClick={true}
+          // onItemInvoked={this._onItemInvoked}
+          // enterModalSelectionOnTouch={true}
+          // ariaLabelForSelectionColumn="Toggle selection"
+          // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+          // checkButtonAriaLabel="select row"
+          // onRenderDetailsFooter={this._onRenderDetailsFooter}
         />
         <table>
           <tr>
