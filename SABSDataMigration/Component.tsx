@@ -178,59 +178,71 @@ export default class Component extends React.Component<
     noofitemssucceeded = 0;
     noofitemsfailed = 0;
     if (data.length > 0 && fields.length > 0) {
-      data.map((item: any) => {
-        var inputData = {};
-        fields.map((field: IField) => {
-          if (
-            field.name &&
-            field.name != "" &&
-            field.csvfield &&
-            field.csvfield != ""
-          )
-            if (item[field.csvfield]) var value = item[field.csvfield];
-          var fieldName = field.name;
-          if (value) {
-            switch (field.AttributeType) {
-              case AttributeType.Picklist.toString():
-                value = getPicklistItemValue(choices, fieldName, value);
-                break;
-              case AttributeType.Lookup.toString():
-                value = getLookupFieldValue(lookups, fieldName, value);
-                fieldName += "@odata.bind";
-                break;
-              case AttributeType.String.toString():
-                value = value.toString();
-                break;
-              case AttributeType.Boolean.toString():
-                value = getBooleanFieldKey(value.toString());
-                break;
-            }
-
-            addPropertyToOobject(inputData, fieldName, value);
-          }
-        });
-        if (Object.keys(inputData).length > 0)
-          this._dataProvider
-            .createRecord(entityName, inputData)
-            .then((success: any) => {
-              console.log(success);
-              noofitemssucceeded++;
-              this.setState({ noofitemssucceeded });
-
-              if (noofitems == noofitemssucceeded + noofitemsfailed) {
-                // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
-                //   console.log(items);
-                //   this.setState({items});
-                // });
-
-                this._cds.getItems(entityName, fields).then((items) => {
-                  console.log(items);
-                  this.setState({ items });
-                });
-              }
-            });
-      });
+      this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 3);
     }
+  }
+
+  private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number) {
+    var len = data.length > endIndex ? endIndex : data.length;
+    for (let idx = startIndex; idx < len; idx++) {
+      var item = data[idx]
+      var inputData = {};
+      fields.map((field: IField) => {
+        if (field.name &&
+          field.name != "" &&
+          field.csvfield &&
+          field.csvfield != "")
+          if (item[field.csvfield])
+            var value = item[field.csvfield];
+        var fieldName = field.name;
+        if (value) {
+          switch (field.AttributeType) {
+            case AttributeType.Picklist.toString():
+              value = getPicklistItemValue(choices, fieldName, value);
+              break;
+            case AttributeType.Lookup.toString():
+              value = getLookupFieldValue(lookups, fieldName, value);
+              fieldName += "@odata.bind";
+              break;
+            case AttributeType.String.toString():
+              value = value.toString();
+              break;
+            case AttributeType.Boolean.toString():
+              value = getBooleanFieldKey(value.toString());
+              break;
+          }
+
+          addPropertyToOobject(inputData, fieldName, value);
+        }
+      });
+      if (Object.keys(inputData).length > 0)
+        this._dataProvider
+          .createRecord(entityName, inputData)
+          .then((success: any) => {
+            console.log(success);
+            noofitemssucceeded++;
+            this.setState({ noofitemssucceeded });
+
+            if (noofitemssucceeded == len) {
+              // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+              //   console.log(items);
+              //   this.setState({items});
+              // });
+              this._cds.getItems(entityName, fields).then((items) => {
+                console.log(items);
+                this.setState({ items });
+              });
+
+              if (data.length > len)
+                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 3);
+            }
+          });
+    }
+
+    // data.map((item: any) => {
+
+    // });
+
   }
 
   private removeField(field: IField) {
@@ -346,7 +358,7 @@ export default class Component extends React.Component<
     transformHeader: (header: any) => header.toLowerCase().replace(/\W/g, "_"),
   };
 
-  private setAttributes() {}
+  private setAttributes() { }
 
   public _onChanged(item: IDropdownOption) {
     var entityName = item.key.toString();
@@ -428,20 +440,20 @@ export default class Component extends React.Component<
           items={items}
           compact={true}
           columns={columns}
-          // onRenderItemColumn={this._renderItemColumn}
-          // selectionMode={SelectionMode.multiple}
-          // getKey={this._getKey}
-          // setKey="multiple"
-          // layoutMode={DetailsListLayoutMode.justified}
-          // isHeaderVisible={true}
-          // selection={this._selection}
-          // selectionPreservedOnEmptyClick={true}
-          // onItemInvoked={this._onItemInvoked}
-          // enterModalSelectionOnTouch={true}
-          // ariaLabelForSelectionColumn="Toggle selection"
-          // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-          // checkButtonAriaLabel="select row"
-          // onRenderDetailsFooter={this._onRenderDetailsFooter}
+        // onRenderItemColumn={this._renderItemColumn}
+        // selectionMode={SelectionMode.multiple}
+        // getKey={this._getKey}
+        // setKey="multiple"
+        // layoutMode={DetailsListLayoutMode.justified}
+        // isHeaderVisible={true}
+        // selection={this._selection}
+        // selectionPreservedOnEmptyClick={true}
+        // onItemInvoked={this._onItemInvoked}
+        // enterModalSelectionOnTouch={true}
+        // ariaLabelForSelectionColumn="Toggle selection"
+        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+        // checkButtonAriaLabel="select row"
+        // onRenderDetailsFooter={this._onRenderDetailsFooter}
         />
         <table>
           <tr>
