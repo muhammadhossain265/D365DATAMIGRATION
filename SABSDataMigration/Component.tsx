@@ -178,7 +178,7 @@ export default class Component extends React.Component<
     noofitemssucceeded = 0;
     noofitemsfailed = 0;
     if (data.length > 0 && fields.length > 0) {
-      this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 3);
+      this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 40);
     }
   }
 
@@ -234,7 +234,7 @@ export default class Component extends React.Component<
               });
 
               if (data.length > len)
-                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 3);
+                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40);
             }
           });
     }
