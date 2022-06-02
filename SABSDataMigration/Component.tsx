@@ -23,6 +23,7 @@ import {
   IColumn,
   IDropdownOption,
   IDropdownStyles,
+  PrimaryButton,
 } from "@fluentui/react";
 import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
@@ -59,6 +60,8 @@ export default class Component extends React.Component<
       noofitems: 0,
       noofitemssucceeded: 0,
       noofitemsfailed: 0,
+      noofitemstodelete: 0,
+      noofitemsdeleted: 0,
       cdsFields: [],
       csvFields: [],
       data: [],
@@ -136,20 +139,29 @@ export default class Component extends React.Component<
       noofitems,
       noofitemssucceeded,
       noofitemsfailed,
+      noofitemsdeleted,
       fields,
     } = this.state;
-    this.setState({ process: "Delete" });
     noofitemssucceeded = 0;
-    noofitemsfailed = 0;
-    this._dataProvider.retrieveMultipleRecords(entityName).then((items) => {
-      this.setState({ noofitems: items.length });
+    this.setState({ process: "Delete", noofitemssucceeded });
+
+    ({ noofitemssucceeded, noofitemsdeleted } = this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields));
+  }
+
+  private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[]) {
+    noofitemsdeleted = 0;
+    this._dataProvider.retrieveMultipleRecords(entityName, '?$top=40').then((items) => {
+      //this.setState({ noofitems: items.length });
+      this.setState({ noofitemstodelete: items.length });
       items.map((item: any) => {
         this._dataProvider
           .deleteRecord(entityName, item[entity._primaryIdAttribute])
           .then((result: any) => {
             noofitemssucceeded++;
-            this.setState({ noofitemssucceeded });
-            if (noofitems == noofitemssucceeded + noofitemsfailed) {
+            noofitemsdeleted++;
+            this.setState({ noofitemssucceeded, noofitemsdeleted });
+            if (this.state.noofitemstodelete == noofitemsdeleted) {
+              this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
               this._cds.getItems(entityName, fields).then((items) => {
                 console.log(items);
                 this.setState({ items });
@@ -158,6 +170,7 @@ export default class Component extends React.Component<
           });
       });
     });
+    return { noofitemssucceeded, noofitemsdeleted };
   }
 
   private importToCDS() {
@@ -228,7 +241,7 @@ export default class Component extends React.Component<
               //   console.log(items);
               //   this.setState({items});
               // });
-              this._cds.getItems(entityName, fields).then((items) => {
+              this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
                 console.log(items);
                 this.setState({ items });
               });
@@ -264,7 +277,7 @@ export default class Component extends React.Component<
       csvFields.map((field) => {
         var cdsField = cdsFields.find(
           (cdsFld) =>
-            cdsFld.label.replace(" ", "_").toLowerCase() == field.label
+            cdsFld.label.replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
           var newfield = {
@@ -404,11 +417,11 @@ export default class Component extends React.Component<
   }
 
   public componentDidMount() {
-    // if (window.location.hostname != "localhost") {
-    //   this._dataProvider.getEntities("All", "All").then((entities) => {
-    //     this.setState({ entities });
-    //   });
-    // }
+    if (window.location.hostname != "localhost") {
+      this._dataProvider.getEntities("All", "All").then((entities) => {
+        this.setState({ entities });
+      });
+    }
   }
 
   public render() {
@@ -436,6 +449,65 @@ export default class Component extends React.Component<
             <td className="failed">{noofitemsfailed}</td>
           </tr>
         </table>
+        <table>
+          <tr>
+            <td>
+              <Dropdown
+                label="Table"
+                defaultSelectedKey="broccoli"
+                options={entities}
+                disabled={false}
+                styles={dropdownStyles}
+                onChanged={this._onChanged}
+              />
+              {/* <input
+                onChange={(value) => this.onTextChange(value, "entityName")}
+              /> */}
+            </td>
+            <td>&nbsp;&nbsp;&nbsp;</td>
+            <td>
+              <CSVReader
+                cssClass="react-csv-input"
+                // label="Choose file"
+                onFileLoaded={this.handleForce}
+                parserOptions={this.papaparseOptions}
+              />
+            </td>
+            <td>&nbsp;&nbsp;</td>
+            <td>
+              <br />
+              <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />&nbsp;&nbsp;
+              <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
+            </td>
+          </tr>
+        </table>
+        {/* <button onClick={this.buttonClick}>click me</button> */}
+        <br />
+        <table width="100%">
+          <tr>
+            <th>CDS Field</th>
+            <th>CSV Field</th>
+            <th>Type</th>
+            <th>More Info</th>
+            <th></th>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          {fields.map((field) => this._row(field))}
+        </table>
+        <br />
+        <PrimaryButton text="Add Field" onClick={this.addField} allowDisabledFocus />
+        <br />
+        <br />
+        <br />
+        {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
+
+        <br />
         <DetailsList
           items={items}
           compact={true}
@@ -455,51 +527,6 @@ export default class Component extends React.Component<
         // checkButtonAriaLabel="select row"
         // onRenderDetailsFooter={this._onRenderDetailsFooter}
         />
-        <table>
-          <tr>
-            <td>
-              <Dropdown
-                label="Table"
-                defaultSelectedKey="broccoli"
-                options={entities}
-                disabled={false}
-                styles={dropdownStyles}
-                onChanged={this._onChanged}
-              />
-              {/* <input
-                onChange={(value) => this.onTextChange(value, "entityName")}
-              /> */}
-            </td>
-            <td>
-              <CSVReader
-                cssClass="react-csv-input"
-                // label="Choose file"
-                onFileLoaded={this.handleForce}
-                parserOptions={this.papaparseOptions}
-              />
-            </td>
-          </tr>
-        </table>
-        {/* <button onClick={this.buttonClick}>click me</button> */}
-        <br />
-        <table width="100%">
-          <tr>
-            <th>CDS Field</th>
-            <th>CSV Field</th>
-            <th>Type</th>
-            <th>More Info</th>
-            <th></th>
-          </tr>
-          {fields.map((field) => this._row(field))}
-        </table>
-        <br />
-        <button onClick={this.addField}>Add field</button>
-        <br />
-        <br />
-        <br />
-        {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
-        <button onClick={this.importToCDS}>Import to CDS</button> &nbsp;&nbsp;
-        <button onClick={this.clearTable}>Clear Table</button>
       </div>
     );
   }
@@ -547,6 +574,8 @@ export interface IState {
   noofitemssucceeded: number;
   noofitemsfailed: number;
   noofitems: number;
+  noofitemstodelete: number;
+  noofitemsdeleted: number;
   cdsFields: ISelectionOption[];
   csvFields: ISelectionOption[];
   data: any;
