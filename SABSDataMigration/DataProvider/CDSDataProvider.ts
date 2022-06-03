@@ -80,9 +80,9 @@ export default class CDSDataProvider implements ICDSDataProvider {
       req.open(
         "GET",
         baseUrl +
-          "/api/data/v9.1/EntityDefinitions(LogicalName='" +
-          entity +
-          "')/Attributes?&$filter=AttributeOf%20eq%20null",
+        "/api/data/v9.1/EntityDefinitions(LogicalName='" +
+        entity +
+        "')/Attributes?&$filter=AttributeOf%20eq%20null",
         true
       );
       req.onreadystatechange = function () {
@@ -107,6 +107,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
               };
               switch (attribute.AttributeType.toString()) {
                 case AttributeType.Lookup.toString():
+                case AttributeType.Customer.toString():
                   setObjectProperty(attrb, "Targets", attribute.Targets);
                   break;
               }
@@ -190,7 +191,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
         if (xhr.readyState !== 4) return;
         if (xhr.status >= 200 && xhr.status < 300) {
           // If successful         
-            resolve(true);
+          resolve(true);
         } else {
           // If failed
           reject({
@@ -223,11 +224,12 @@ export default class CDSDataProvider implements ICDSDataProvider {
       if (supportsActivities !== "All") {
         filter = filter + "%20and%20HasActivities%20eq%20true";
       }
+      filter += '&$orderby=DisplayName'
       req.open(
         "GET",
         baseUrl +
-          "/api/data/v9.1/EntityDefinitions?$select=LogicalName,DisplayName&$filter=" +
-          filter,
+        "/api/data/v9.1/EntityDefinitions?$select=LogicalName,DisplayName&$filter=" +
+        filter,
         true
       );
       req.onreadystatechange = function () {

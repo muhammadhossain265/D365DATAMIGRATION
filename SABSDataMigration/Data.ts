@@ -11,4 +11,8 @@ export const entities: IDropdownOption[] =
     {
         key: "sabs_lodgmentitem",
         text: "Lodgment Item"
+    },
+    {
+        key: "sabs_datamigration",
+        text: "Data Migration"
     }];

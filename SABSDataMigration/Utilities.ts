@@ -156,6 +156,17 @@ export function getLookupFieldValue(
   let lookup = lookups.find((lookup) => lookup.key == key);
   if (lookup) {
     var fieldName = 'sabs_sabsid';
+    if (target) {
+      switch (target) {
+        case 'systemuser':
+          fieldName = 'domainname'
+          break;
+          case 'account':
+          case 'contact':
+          fieldName = 'emailaddress1'
+          break;
+      }
+    }
     if (target && target == 'systemuser')
       fieldName = 'domainname'
     var itm = lookup.value.find((item: any) => item[fieldName] == value);
