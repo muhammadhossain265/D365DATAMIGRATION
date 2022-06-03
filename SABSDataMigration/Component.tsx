@@ -214,8 +214,10 @@ export default class Component extends React.Component<
               value = getPicklistItemValue(choices, fieldName, value);
               break;
             case AttributeType.Lookup.toString():
-              value = getLookupFieldValue(lookups, fieldName, value);
+              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets[0] : '');
               fieldName += "@odata.bind";
+              if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
+                fieldName = `${field.schemaname}@odata.bind`;
               break;
             case AttributeType.String.toString():
               value = value.toString();
@@ -280,13 +282,14 @@ export default class Component extends React.Component<
             cdsFld.label.replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
-          var newfield = {
+          var newfield: IField = {
             id: id,
             name: cdsField.value,
             label: cdsField.label,
             csvfield: field.label,
             AttributeType: cdsField.AttributeType,
-            targets: [],
+            targets: cdsField.Targets,
+            schemaname: cdsField.SchemaName? cdsField.SchemaName : ''
           };
           fields.push(newfield);
           id++;
@@ -344,7 +347,7 @@ export default class Component extends React.Component<
       field.id = id;
       id++;
     });
-    fields.push({ id: id, name: "", label: "", csvfield: "", targets: [] });
+    fields.push({ id: id, name: "", label: "", csvfield: "", targets: [], schemaname: '' });
     this.setState({ fields });
   }
 
@@ -389,6 +392,7 @@ export default class Component extends React.Component<
             value: attribute.LogicalName,
             label: attribute.Label,
             AttributeType: attribute.AttributeType,
+            SchemaName: attribute.SchemaName,
             Targets: attribute.Targets,
           });
         });
@@ -399,6 +403,7 @@ export default class Component extends React.Component<
             .addAttribute(entity._entityDescriptor.Id.guid, {
               name: "sabs_sabsid",
               label: "SABSID",
+              schemaname: ''
             })
             .then((result: any) => {
               console.log(result);
@@ -488,11 +493,13 @@ export default class Component extends React.Component<
             <th>CDS Field</th>
             <th>CSV Field</th>
             <th>Type</th>
-            <th>More Info</th>
+            <th>Schema</th>
+            <th>Targets</th>
             <th></th>
           </tr>
           <tr>
             <td>&nbsp;</td>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
@@ -556,6 +563,9 @@ export default class Component extends React.Component<
         <td style={{ textAlign: "center" }}>
           {field.AttributeType ? field.AttributeType : ""}
         </td>
+        <td style={{ textAlign: "center", width: "20%" }}>
+          {field.schemaname}
+        </td>
         {/* <td>Lookup Table Name: </td> */}
         <td style={{ textAlign: "center", width: "20%" }}>
           {field.targets ? field.targets.join(",") : ""}
@@ -598,12 +608,14 @@ export interface IField {
   targets?: string[];
   choiceDataSet?: string;
   AttributeType?: string;
+  schemaname: string;
 }
 
 export interface ISelectionOption {
   value: string;
   label: string;
   AttributeType?: string;
+  SchemaName?: string;
   Targets?: string[];
 }
 

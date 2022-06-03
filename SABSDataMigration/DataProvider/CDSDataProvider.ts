@@ -103,6 +103,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
                 LogicalName: attribute.LogicalName,
                 Label: attribute.DisplayName.UserLocalizedLabel.Label,
                 AttributeType: attribute.AttributeType,
+                SchemaName: attribute.SchemaName
               };
               switch (attribute.AttributeType.toString()) {
                 case AttributeType.Lookup.toString():

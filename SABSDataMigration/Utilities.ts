@@ -84,9 +84,9 @@ export function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key
 ): (
-  a: { [key in Key]: number | string },
-  b: { [key in Key]: number | string }
-) => number {
+    a: { [key in Key]: number | string },
+    b: { [key in Key]: number | string }
+  ) => number {
   return order === "desc"
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -150,16 +150,19 @@ export function getPicklistItemValue(
 export function getLookupFieldValue(
   lookups: ILookup[],
   key: string,
-  value: string
+  value: string,
+  target?: string
 ): string {
   let lookup = lookups.find((lookup) => lookup.key == key);
   if (lookup) {
-    var itm = lookup.value.find((item: any) => item.sabs_sabsid == value);
+    var fieldName = 'sabs_sabsid';
+    if (target && target == 'systemuser')
+      fieldName = 'domainname'
+    var itm = lookup.value.find((item: any) => item[fieldName] == value);
     if (itm)
-      return `/${lookup.entity._entitySetName}(${
-        itm[lookup.entity._primaryIdAttribute]
-      })`;
-    else alert(`Lookup Item ${value} does not exist in Choice ${key}`);
+      return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
+        })`;
+    else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
   } else alert(`Lookup ${key} does not exist`);
 
   return "";

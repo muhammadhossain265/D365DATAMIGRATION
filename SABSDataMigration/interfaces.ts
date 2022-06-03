@@ -20,5 +20,6 @@ export interface IAttribute {
   LogicalName: string;
   Label: string;
   AttributeType: string;
+  SchemaName: string;
   Targets?: string[];
 }
