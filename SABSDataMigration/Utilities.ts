@@ -151,9 +151,54 @@ export function getLookupFieldValue(
   lookups: ILookup[],
   key: string,
   value: string,
-  target?: string
+  targets?: string[]
 ): string {
-  let lookup = lookups.find((lookup) => lookup.key == key);
+
+  var property = '';
+  if (targets && targets.length > 0) {
+    targets.map((target: string) => {
+      if (property == '') {
+        property = findLookupValue(lookups, key, value, target);
+        if (property != '')
+          return;
+      }
+    });
+  }
+
+  // let lookup = lookups.find((lookup) => lookup.key == target);
+  // if (lookup) {
+  //   var fieldName = 'sabs_sabsid';
+  //   if (target) {
+  //     switch (target) {
+  //       case 'systemuser':
+  //         fieldName = 'domainname'
+  //         break;
+  //         case 'account':
+  //         case 'contact':
+  //         fieldName = 'emailaddress1'
+  //         break;
+  //     }
+  //   }
+  //   if (target && target == 'systemuser')
+  //     fieldName = 'domainname'
+  //   var itm = lookup.value.find((item: any) => item[fieldName] == value);
+  //   if (itm)
+  //     return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
+  //       })`;
+  //   else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
+  // } else alert(`Lookup ${key} does not exist`);
+
+  if (property == '')
+    alert(`Lookup Item ${value} does not exist in Lookups ${targets?.join(',')}`);
+  return property;
+}
+
+export function findLookupValue(lookups: ILookup[],
+  key: string,
+  value: string,
+  target?: string) {
+
+  let lookup = lookups.find((lookup) => lookup.key == target);
   if (lookup) {
     var fieldName = 'sabs_sabsid';
     if (target) {
@@ -161,8 +206,8 @@ export function getLookupFieldValue(
         case 'systemuser':
           fieldName = 'domainname'
           break;
-          case 'account':
-          case 'contact':
+        case 'account':
+        case 'contact':
           fieldName = 'emailaddress1'
           break;
       }
@@ -173,10 +218,11 @@ export function getLookupFieldValue(
     if (itm)
       return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
         })`;
-    else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
+    //else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
   } else alert(`Lookup ${key} does not exist`);
 
   return "";
+
 }
 
 export function getBooleanFieldValue(obj: any, fieldname: string) {
@@ -204,8 +250,10 @@ export function parseObj(obj: any, files: IField[]) {
         objOut[field.name] = getChoiceFieldValue(obj, field.name);
         break;
       case AttributeType.Lookup.toString():
+      case AttributeType.Customer.toString():
         _setLookupFieldValue(objOut, obj, field.name, field.name);
         break;
+
     }
   });
 

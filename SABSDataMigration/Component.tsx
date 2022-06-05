@@ -214,10 +214,17 @@ export default class Component extends React.Component<
               value = getPicklistItemValue(choices, fieldName, value);
               break;
             case AttributeType.Lookup.toString():
-              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets[0] : '');
-              fieldName += "@odata.bind";
+              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+              fieldName = field.schemaname + "@odata.bind";
               if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
                 fieldName = `${field.schemaname}@odata.bind`;
+              break;
+            case AttributeType.Customer.toString():
+              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+              if (value.indexOf('contacts') > 0)
+                fieldName += "_contact@odata.bind";
+              else
+                fieldName += "_account@odata.bind";
               break;
             case AttributeType.String.toString():
               value = value.toString();
@@ -289,7 +296,7 @@ export default class Component extends React.Component<
             csvfield: field.label,
             AttributeType: cdsField.AttributeType,
             targets: cdsField.Targets,
-            schemaname: cdsField.SchemaName? cdsField.SchemaName : ''
+            schemaname: cdsField.SchemaName ? cdsField.SchemaName : ''
           };
           fields.push(newfield);
           id++;
@@ -309,26 +316,10 @@ export default class Component extends React.Component<
 
             case AttributeType.Lookup.toString():
               if (cdsField.Targets && cdsField.Targets.length > 0) {
-                var entityName = "";
+
                 if (cdsField.Targets.length > 0)
-                  entityName = cdsField.Targets[0];
-                this._dataProvider
-                  .retrieveMultipleRecords(entityName)
-                  .then((result: any) => {
-                    this._dataProvider
-                      .getEntityMetadata(entityName, [])
-                      .then((entity) => {
-                        var lkup = lookups.find(
-                          (lookup) => lookup.key == newfield.name
-                        );
-                        if (lkup) lkup.value = result;
-                        else
-                          lookups.push({
-                            key: newfield.name,
-                            value: result,
-                            entity,
-                          });
-                      });
+                  cdsField.Targets.map((entityname: string) => {
+                    this.addLookup(entityname);
                   });
               }
               break;
@@ -338,6 +329,31 @@ export default class Component extends React.Component<
     }
 
     this.setState({ fields });
+  }
+
+  private addLookup(entityname: string) {
+    let { lookups } = this.state;
+    var lkup = lookups.find(
+      (lookup) => lookup.key == entityname
+    );
+    if (!lkup) {
+      this._dataProvider
+        .retrieveMultipleRecords(entityname)
+        .then((result: any) => {
+          this._dataProvider
+            .getEntityMetadata(entityname, [])
+            .then((entity) => {
+              var lkup = lookups.find(
+                (lookup) => lookup.key == entityname
+              );
+              lookups.push({
+                key: entityname,
+                value: result,
+                entity,
+              });
+            });
+        });
+    }
   }
 
   private addField() {
