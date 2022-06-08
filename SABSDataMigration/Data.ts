@@ -19,4 +19,21 @@ export const entities: IDropdownOption[] =
     {
         key: "sabs_customtable",
         text: "Custom Table"
-    }];
+    },
+    {
+        key: "account",
+        text: "Account"
+    },
+    {
+        key: "contact",
+        text: "Contact"
+    },
+    {
+        key: "incident",
+        text: "Case"
+    },
+    {
+        key: "activitypointer",
+        text: "Activity"
+    }
+];

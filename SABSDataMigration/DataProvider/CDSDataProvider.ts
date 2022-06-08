@@ -99,19 +99,21 @@ export default class CDSDataProvider implements ICDSDataProvider {
             }
             let attributes: IAttribute[] = [];
             result.value.map((attribute: any) => {
-              let attrb: IAttribute = {
-                LogicalName: attribute.LogicalName,
-                Label: attribute.DisplayName.UserLocalizedLabel.Label,
-                AttributeType: attribute.AttributeType,
-                SchemaName: attribute.SchemaName
-              };
-              switch (attribute.AttributeType.toString()) {
-                case AttributeType.Lookup.toString():
-                case AttributeType.Customer.toString():
-                  setObjectProperty(attrb, "Targets", attribute.Targets);
-                  break;
+              if (attribute) {
+                let attrb: IAttribute = {
+                  LogicalName: attribute.LogicalName,
+                  Label: attribute.DisplayName?.UserLocalizedLabel?.Label,
+                  AttributeType: attribute.AttributeType,
+                  SchemaName: attribute.SchemaName
+                };
+                switch (attribute.AttributeType.toString()) {
+                  case AttributeType.Lookup.toString():
+                  case AttributeType.Customer.toString():
+                    setObjectProperty(attrb, "Targets", attribute.Targets);
+                    break;
+                }
+                attributes.push(attrb);
               }
-              attributes.push(attrb);
             });
             resolve(attributes);
           } catch (error) {
@@ -224,7 +226,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
       if (supportsActivities !== "All") {
         filter = filter + "%20and%20HasActivities%20eq%20true";
       }
-      filter += '&$orderby=DisplayName'
+      //filter += '&$orderby=DisplayName'
       req.open(
         "GET",
         baseUrl +

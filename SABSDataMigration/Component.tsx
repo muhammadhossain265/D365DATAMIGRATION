@@ -9,6 +9,7 @@ import {
   addPropertyToOobject,
   getBooleanFieldKey,
   getGridColumns,
+  getLocalDateAndTimeString,
   getLookupFieldValue,
   getPicklistItemValue,
   getPropertyValue,
@@ -37,9 +38,15 @@ export default class Component extends React.Component<
     super(props);
 
     var entityId = "";
+    var batch = null;
+
     if (window.location.hostname != "localhost") {
       // @ts-ignore
       entityId = Xrm.Page.data.entity._entityId.guid;
+      // @ts-ignore
+      batch = Xrm.Page.getAttribute('sabs_name');
+      if (batch)
+        batch = batch.getValue();
     }
     // this.buttonClick = this.buttonClick.bind(this);
     this.onTextChange = this.onTextChange.bind(this);
@@ -74,6 +81,7 @@ export default class Component extends React.Component<
       entities: entities,
       columns: [],
       items: [],
+      batch: batch
     };
   }
 
@@ -145,32 +153,38 @@ export default class Component extends React.Component<
     noofitemssucceeded = 0;
     this.setState({ process: "Delete", noofitemssucceeded });
 
-    ({ noofitemssucceeded, noofitemsdeleted } = this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields));
+    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
   }
 
   private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[]) {
-    noofitemsdeleted = 0;
-    this._dataProvider.retrieveMultipleRecords(entityName, '?$top=40').then((items) => {
-      //this.setState({ noofitems: items.length });
-      this.setState({ noofitemstodelete: items.length });
-      items.map((item: any) => {
-        this._dataProvider
-          .deleteRecord(entityName, item[entity._primaryIdAttribute])
-          .then((result: any) => {
-            noofitemssucceeded++;
-            noofitemsdeleted++;
-            this.setState({ noofitemssucceeded, noofitemsdeleted });
-            if (this.state.noofitemstodelete == noofitemsdeleted) {
-              this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
-              this._cds.getItems(entityName, fields).then((items) => {
-                console.log(items);
-                this.setState({ items });
-              });
-            }
-          });
+    let { batch } = this.state;
+    if (batch.length > 0) {
+      noofitemsdeleted = 0;
+      this._dataProvider.retrieveMultipleRecords(entityName, '?$top=40&$orderby=modifiedon desc').then((items) => {        
+        //this.setState({ noofitems: items.length });
+        this.setState({ noofitemstodelete: items.length });
+        items.map((item: any) => {
+          if (item["sabs_batch"] && item["sabs_batch"].length > 0 && item["sabs_batch"] == batch) {
+          this._dataProvider
+            .deleteRecord(entityName, item[entity._primaryIdAttribute])
+            .then((result: any) => {
+              noofitemssucceeded++;
+              noofitemsdeleted++;
+              this.setState({ noofitemssucceeded, noofitemsdeleted });
+              if (this.state.noofitemstodelete == noofitemsdeleted) {
+                this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
+                this._cds.getItems(entityName, fields).then((items) => {
+                  console.log(items);
+                  this.setState({ items });
+                });
+              }
+            });
+          }
+        });
       });
-    });
-    return { noofitemssucceeded, noofitemsdeleted };
+      return { noofitemssucceeded, noofitemsdeleted };
+    }
+    else alert('Bath number is missing');
   }
 
   private importToCDS() {
@@ -183,19 +197,31 @@ export default class Component extends React.Component<
       noofitems,
       noofitemssucceeded,
       noofitemsfailed,
+      entities
     } = this.state;
 
-    let columns = getGridColumns(fields);
+    var entity = entities.find((item: IDropdownOption) => item.key == entityName);
+    if (entity) {
+      // @ts-ignore    
+      Xrm.Page.getAttribute('sabs_tabledisplayname').setValue(entity.text);
+      // @ts-ignore   
+      Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
+      var batch = 'SABS ' + getLocalDateAndTimeString(new Date);
+      // @ts-ignore    
+      Xrm.Page.getAttribute('sabs_name').setValue(batch);
+      this.setState({ batch });
 
-    this.setState({ process: "Add", columns });
-    noofitemssucceeded = 0;
-    noofitemsfailed = 0;
-    if (data.length > 0 && fields.length > 0) {
-      this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 40);
+      let columns = getGridColumns(fields);
+      this.setState({ process: "Add", columns });
+      noofitemssucceeded = 0;
+      noofitemsfailed = 0;
+      if (data.length > 0 && fields.length > 0) {
+        this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 40, batch);
+      }
     }
   }
 
-  private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number) {
+  private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number, batch: string) {
     var len = data.length > endIndex ? endIndex : data.length;
     for (let idx = startIndex; idx < len; idx++) {
       var item = data[idx]
@@ -237,7 +263,8 @@ export default class Component extends React.Component<
           addPropertyToOobject(inputData, fieldName, value);
         }
       });
-      if (Object.keys(inputData).length > 0)
+      if (Object.keys(inputData).length > 0) {
+        addPropertyToOobject(inputData, 'sabs_batch', batch)
         this._dataProvider
           .createRecord(entityName, inputData)
           .then((success: any) => {
@@ -256,9 +283,10 @@ export default class Component extends React.Component<
               });
 
               if (data.length > len)
-                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40);
+                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
             }
           });
+      }
     }
 
     // data.map((item: any) => {
@@ -286,7 +314,7 @@ export default class Component extends React.Component<
       csvFields.map((field) => {
         var cdsField = cdsFields.find(
           (cdsFld) =>
-            cdsFld.label.replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
+            cdsFld.label && cdsFld.label.replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
           var newfield: IField = {
@@ -432,17 +460,32 @@ export default class Component extends React.Component<
             });
           this.setState({ cdsFields });
         } else this.setState({ cdsFields });
+
+        var batch = cdsFields.find((field) => field.label == "BATCH");
+        if (!batch) {
+          this._dataProvider
+            .addAttribute(entity._entityDescriptor.Id.guid, {
+              name: "sabs_batch",
+              label: "BATCH",
+              schemaname: ''
+            })
+            .then((result: any) => {
+              console.log(result);
+            });
+          this.setState({ cdsFields });
+        }
+
         this.addFields();
       });
     });
   }
 
   public componentDidMount() {
-    if (window.location.hostname != "localhost") {
-      this._dataProvider.getEntities("All", "All").then((entities) => {
-        this.setState({ entities });
-      });
-    }
+    // if (window.location.hostname != "localhost") {
+    //   this._dataProvider.getEntities("All", "All").then((entities) => {
+    //     this.setState({ entities });
+    //   });
+    // }
   }
 
   public render() {
@@ -455,6 +498,7 @@ export default class Component extends React.Component<
       items,
       columns,
       process,
+      batch
     } = this.state;
     return (
       <div>
@@ -497,8 +541,11 @@ export default class Component extends React.Component<
             <td>&nbsp;&nbsp;</td>
             <td>
               <br />
-              <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />&nbsp;&nbsp;
-              <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
+              
+                <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />&nbsp;&nbsp;
+              {batch.length > 0 &&
+                <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
+              }
             </td>
           </tr>
         </table>
@@ -614,6 +661,7 @@ export interface IState {
   entities: IDropdownOption[];
   items: any;
   columns: IColumn[];
+  batch: string;
 }
 
 export interface IField {

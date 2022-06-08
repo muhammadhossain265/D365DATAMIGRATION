@@ -206,14 +206,12 @@ export function findLookupValue(lookups: ILookup[],
         case 'systemuser':
           fieldName = 'domainname'
           break;
-        case 'account':
-        case 'contact':
-          fieldName = 'emailaddress1'
-          break;
+        // case 'account':
+        // case 'contact':
+        //   fieldName = 'emailaddress1'
+        //   break;
       }
-    }
-    if (target && target == 'systemuser')
-      fieldName = 'domainname'
+    }    
     var itm = lookup.value.find((item: any) => item[fieldName] == value);
     if (itm)
       return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
@@ -275,4 +273,12 @@ export function getGridColumns(fields: IField[]): IColumn[] {
       minWidth: minWidth,
     };
   });
+}
+
+export function getLocalDateAndTimeString(date: Date) {
+  if (date){
+    return date.toLocaleDateString('en-au') +  ' ' + date.toLocaleTimeString('en-au');    
+  }
+
+  return '';
 }
