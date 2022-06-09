@@ -12,10 +12,10 @@ export const entities: IDropdownOption[] =
         key: "sabs_lodgmentitem",
         text: "Lodgment Item"
     },
-    {
-        key: "sabs_datamigration",
-        text: "Data Migration"
-    },
+    // {
+    //     key: "sabs_datamigration",
+    //     text: "Data Migration"
+    // },
     {
         key: "sabs_customtable",
         text: "Custom Table"
@@ -28,10 +28,10 @@ export const entities: IDropdownOption[] =
         key: "contact",
         text: "Contact"
     },
-    {
-        key: "incident",
-        text: "Case"
-    },
+    // {
+    //     key: "incident",
+    //     text: "Case"
+    // },
     {
         key: "activitypointer",
         text: "Activity"

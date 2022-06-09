@@ -291,3 +291,12 @@ export function setAttributeValue(name: string, value: any) {
       attribute.setValue(value.toString());
   }
 }
+
+export function getAttributeValue(name: string): any {
+  if (name) {
+    // @ts-ignore
+    var attribute = Xrm.Page.getAttribute(name);
+    if (attribute)
+      attribute.getValue();
+  }
+}

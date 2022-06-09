@@ -7,6 +7,7 @@ import { IInputs } from "./generated/ManifestTypes";
 import Select from "react-select";
 import {
   addPropertyToOobject,
+  getAttributeValue,
   getBooleanFieldKey,
   getGridColumns,
   getLocalDateAndTimeString,
@@ -47,7 +48,8 @@ export default class Component extends React.Component<
       // @ts-ignore
       batch = Xrm.Page.getAttribute('sabs_batch');
       if (batch)
-        batch = batch.getValue();
+        batch = batch.getValue() ? batch.getValue() : '';
+      else batch = '';
     }
     // this.buttonClick = this.buttonClick.bind(this);
     this.onTextChange = this.onTextChange.bind(this);
@@ -142,9 +144,14 @@ export default class Component extends React.Component<
     });
   }
 
+  private resetAttributes() {
+    setAttributeValue('sabs_totalnumberofitemssucceeded', 0);
+    setAttributeValue('sabs_totalnumberofitemstoadd', 0);
+    setAttributeValue('sabs_batch', '');
+  }
+
   private clearTable() {
     let {
-      entityName,
       entity,
       noofitems,
       noofitemssucceeded,
@@ -152,13 +159,23 @@ export default class Component extends React.Component<
       noofitemsdeleted,
       fields,
     } = this.state;
+
+    var entityName = getAttributeValue('sabs_tablelogicalname');
+    if (entityName && entityName.length > 0) {
+    var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+    if (noofitemssucceededpreviously)
+      this.setState({ noofitems: noofitemssucceededpreviously });
     noofitemssucceeded = 0;
     this.setState({ process: "Delete", noofitemssucceeded });
 
-    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
+    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    }
+    else {
+      alert('Table name missing!!');
+    }
   }
 
-  private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[]) {
+  private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
     let { batch } = this.state;
     if (batch.length > 0) {
       noofitemsdeleted = 0;
@@ -174,8 +191,11 @@ export default class Component extends React.Component<
                   noofitemssucceeded++;
                   noofitemsdeleted++;
                   this.setState({ noofitemssucceeded, noofitemsdeleted });
+                  if (noofitems == noofitemssucceeded)
+                  this.resetAttributes();
+
                   if (this.state.noofitemstodelete == noofitemsdeleted) {
-                    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields);
+                    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
                     this._cds.getItems(entityName, fields).then((items) => {
                       console.log(items);
                       this.setState({ items });
@@ -209,12 +229,12 @@ export default class Component extends React.Component<
 
     var entity = entities.find((item: IDropdownOption) => item.key == entityName);
     if (entity) {
-      if (batch = '') {
-      // @ts-ignore    
-      Xrm.Page.getAttribute('sabs_tabledisplayname').setValue(entity.text);
-      // @ts-ignore   
-      Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
-      batch = 'SABS ' + getLocalDateAndTimeString(new Date);      
+      if (batch.length == 0) {
+        // @ts-ignore    
+        Xrm.Page.getAttribute('sabs_tabledisplayname').setValue(entity.text);
+        // @ts-ignore   
+        Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
+        batch = 'SABS ' + getLocalDateAndTimeString(new Date);
         // @ts-ignore    
         Xrm.Page.getAttribute('sabs_batch').setValue(batch);
         this.setState({ batch });
@@ -295,7 +315,7 @@ export default class Component extends React.Component<
                   this.setState({ items });
                 });
 
-                
+
                 if (data.length > len)
                   this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
               }
@@ -420,7 +440,7 @@ export default class Component extends React.Component<
         csvFields.push({ value: fieldName, label: fieldName });
       });
 
-      this.setState({ data, csvFields, noofitems: data.length });      
+      this.setState({ data, csvFields, noofitems: data.length });
 
       this._updatecsvFieldLabels();
 
@@ -432,16 +452,16 @@ export default class Component extends React.Component<
   };
 
   private _updatecsvFieldLabels() {
-    let {cdsFields, csvFields} = this.state;
-    if (cdsFields.length> 0 && csvFields.length > 0) {
+    let { cdsFields, csvFields } = this.state;
+    if (cdsFields.length > 0 && csvFields.length > 0) {
       csvFields.map(field => {
         var cdsField = cdsFields.find(cdsField => cdsField.value == field.value);
         if (cdsField)
-        field.label = cdsField.label;
+          field.label = cdsField.label;
         return field;
       });
 
-      this.setState({cdsFields});
+      this.setState({ cdsFields });
     }
 
   }
@@ -579,7 +599,8 @@ export default class Component extends React.Component<
             <td>
               <br />
 
-              <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />&nbsp;&nbsp;
+              {batch.length == 0 && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
+              &nbsp;&nbsp;
               {batch.length > 0 &&
                 <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
               }
@@ -608,10 +629,10 @@ export default class Component extends React.Component<
           {fields.map((field) => this._row(field))}
         </table>
         <br />
-        <PrimaryButton text="Add Field" onClick={this.addField} allowDisabledFocus />
+        {/* <PrimaryButton text="Add Field" onClick={this.addField} allowDisabledFocus /> */}
         <br />
-        <br />
-        <br />
+        {/* <br />
+        <br /> */}
         {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
 
         <br />
