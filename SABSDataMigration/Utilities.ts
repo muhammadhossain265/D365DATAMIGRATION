@@ -211,7 +211,7 @@ export function findLookupValue(lookups: ILookup[],
         //   fieldName = 'emailaddress1'
         //   break;
       }
-    }    
+    }
     var itm = lookup.value.find((item: any) => item[fieldName] == value);
     if (itm)
       return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
@@ -276,9 +276,18 @@ export function getGridColumns(fields: IField[]): IColumn[] {
 }
 
 export function getLocalDateAndTimeString(date: Date) {
-  if (date){
-    return date.toLocaleDateString('en-au') +  ' ' + date.toLocaleTimeString('en-au');    
+  if (date) {
+    return date.toLocaleDateString('en-au') + ' ' + date.toLocaleTimeString('en-au');
   }
 
   return '';
+}
+
+export function setAttributeValue(name: string, value: any) {
+  if (value) {
+    // @ts-ignore
+    var attribute = Xrm.Page.getAttribute(name);
+    if (attribute)
+      attribute.setValue(value.toString());
+  }
 }
