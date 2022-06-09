@@ -297,6 +297,7 @@ export function getAttributeValue(name: string): any {
     // @ts-ignore
     var attribute = Xrm.Page.getAttribute(name);
     if (attribute)
-      attribute.getValue();
+      return attribute.getValue();
+      return '';
   }
 }
