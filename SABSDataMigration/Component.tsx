@@ -44,7 +44,7 @@ export default class Component extends React.Component<
 
     if (window.location.hostname != "localhost") {
       // @ts-ignore
-      entityId = Xrm.Page.data.entity._entityId.guid;
+      entityId = Xrm.Page.data.entity.getId();
       // @ts-ignore
       batch = Xrm.Page.getAttribute('sabs_batch');
       if (batch)
@@ -162,13 +162,13 @@ export default class Component extends React.Component<
 
     var entityName = getAttributeValue('sabs_tablelogicalname');
     if (entityName && entityName.length > 0) {
-    var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
-    if (noofitemssucceededpreviously)
-      this.setState({ noofitems: noofitemssucceededpreviously });
-    noofitemssucceeded = 0;
-    this.setState({ process: "Delete", noofitemssucceeded });
+      var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+      if (noofitemssucceededpreviously)
+        this.setState({ noofitems: noofitemssucceededpreviously });
+      noofitemssucceeded = 0;
+      this.setState({ process: "Delete", noofitemssucceeded });
 
-    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+      this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
     }
     else {
       alert('Table name missing!!');
@@ -184,26 +184,26 @@ export default class Component extends React.Component<
         this.setState({ noofitemstodelete: items.length });
         items.map((item: any) => {
           if (item["sabs_batch"] && item["sabs_batch"].length > 0 && item["sabs_batch"] == batch) {
-            setTimeout(() => {
-              this._dataProvider
-                .deleteRecord(entityName, item[entity._primaryIdAttribute])
-                .then((result: any) => {
-                  noofitemssucceeded++;
-                  noofitemsdeleted++;
-                  this.setState({ noofitemssucceeded, noofitemsdeleted });
-                  if (noofitems == noofitemssucceeded)
+
+            this._dataProvider
+              .deleteRecord(entityName, item[entity._primaryIdAttribute])
+              .then((result: any) => {
+                noofitemssucceeded++;
+                noofitemsdeleted++;
+                this.setState({ noofitemssucceeded, noofitemsdeleted });
+                if (noofitems == noofitemssucceeded)
                   this.resetAttributes();
 
-                  if (this.state.noofitemstodelete == noofitemsdeleted) {
+                if (this.state.noofitemstodelete == noofitemsdeleted) {
+                  setTimeout(() => {
                     this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
                     this._cds.getItems(entityName, fields).then((items) => {
                       console.log(items);
                       this.setState({ items });
                     });
-                  }
-                });
-
-            }, 3000);
+                  }, 3000);
+                }
+              });
           }
         });
       });
@@ -295,33 +295,35 @@ export default class Component extends React.Component<
       if (Object.keys(inputData).length > 0) {
 
         addPropertyToOobject(inputData, 'sabs_batch', batch)
-        setTimeout(() => {
-          this._dataProvider
-            .createRecord(entityName, inputData)
-            .then((success: any) => {
-              console.log(success);
-              noofitemssucceeded++;
-              this.setState({ noofitemssucceeded });
+        //setTimeout(() => {
+        this._dataProvider
+          .createRecord(entityName, inputData)
+          .then((success: any) => {
+            console.log(success);
+            noofitemssucceeded++;
+            this.setState({ noofitemssucceeded });
 
-              setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
+            setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
 
-              if (noofitemssucceeded == len) {
-                // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
-                //   console.log(items);
-                //   this.setState({items});
-                // });
-                this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
-                  console.log(items);
-                  this.setState({ items });
-                });
+            if (noofitemssucceeded == len) {
+              // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
+              //   console.log(items);
+              //   this.setState({items});
+              // });
+              this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
+                console.log(items);
+                this.setState({ items });
+              });
 
 
-                if (data.length > len)
-                  this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
-              }
-            });
+              if (data.length > len)
+              setTimeout(() => {
+                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
+              }, 3000);
+            }
+          });
 
-        }, 3000);
+        //}, 3000);
       }
     }
 
@@ -377,8 +379,16 @@ export default class Component extends React.Component<
                   else choices.push({ key: newfield.name, value: result });
                 });
               break;
-
             case AttributeType.Lookup.toString():
+              if (cdsField.Targets && cdsField.Targets.length > 0) {
+
+                if (cdsField.Targets.length > 0)
+                  cdsField.Targets.map((entityname: string) => {
+                    this.addLookup(entityname);
+                  });
+              }
+              break;
+              case AttributeType.Customer.toString():
               if (cdsField.Targets && cdsField.Targets.length > 0) {
 
                 if (cdsField.Targets.length > 0)
@@ -442,7 +452,7 @@ export default class Component extends React.Component<
 
       this.setState({ data, csvFields, noofitems: data.length });
 
-      this._updatecsvFieldLabels();
+      //this._updatecsvFieldLabels();
 
       setAttributeValue('sabs_totalnumberofitemstoadd', data.length);
 
@@ -530,7 +540,7 @@ export default class Component extends React.Component<
           this.setState({ cdsFields });
         }
 
-        this._updatecsvFieldLabels();
+        //this._updatecsvFieldLabels();
 
         this.addFields();
       });

@@ -217,7 +217,7 @@ export function findLookupValue(lookups: ILookup[],
       return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
         })`;
     //else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
-  } else alert(`Lookup ${key} does not exist`);
+  } else alert(`Lookup ${target} does not exist`);
 
   return "";
 
