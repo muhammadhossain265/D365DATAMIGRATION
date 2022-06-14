@@ -352,7 +352,7 @@ export default class Component extends React.Component<
       csvFields.map((field) => {
         var cdsField = cdsFields.find(
           (cdsFld) =>
-            cdsFld.label && cdsFld.label.replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
+            cdsFld.label && cdsFld.label.replace('/', ' ').replace(':', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
           var newfield: IField = {
