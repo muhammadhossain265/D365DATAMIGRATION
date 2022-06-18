@@ -17,7 +17,7 @@ import {
   setAttributeValue,
   setObjectProperty,
 } from "./Utilities";
-import { IAttribute, IChoice, ILookup } from "./interfaces";
+import { IAttribute, IChoice, ILookup, ILookupEntity } from "./interfaces";
 import { AttributeType } from "./enums";
 import {
   DetailsList,
@@ -31,6 +31,7 @@ import {
 import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
 import { entities } from "./Data";
+import { text } from "stream/consumers";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -60,6 +61,7 @@ export default class Component extends React.Component<
     this.onChange = this.onChange.bind(this);
     this._onChanged = this._onChanged.bind(this);
     this.clearTable = this.clearTable.bind(this);
+    this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
@@ -93,7 +95,7 @@ export default class Component extends React.Component<
   private _cds: ICDS;
 
   private onChange(e: any, field: IField, fieldName: string) {
-    let { fields, choices } = this.state;
+    let { fields, choices, entity } = this.state;
     var currentField = fields.find(
       (fld) => getPropertyValue(fld, fieldName) == e.value
     );
@@ -108,7 +110,7 @@ export default class Component extends React.Component<
 
       switch (currentField?.AttributeType) {
         case AttributeType.Picklist.toString():
-          this._dataProvider.getOptions(field.name).then((result: any) => {
+          this._dataProvider.getOptions(field.name, entity.ObjectTypeCode).then((result: any) => {
             var ch = choices.find((choice) => choice.key == field.name);
             if (ch) ch.value = result;
             else choices.push({ key: field.name, value: result });
@@ -129,7 +131,7 @@ export default class Component extends React.Component<
   }
 
   private getRelatedData() {
-    let { fields, entity: enity } = this.state;
+    let { fields, entity } = this.state;
 
     fields.map((field: IField) => {
       if (
@@ -138,7 +140,7 @@ export default class Component extends React.Component<
         field.csvfield &&
         field.csvfield != ""
       )
-        this._dataProvider.getOptions(field.name).then((result: any) => {
+        this._dataProvider.getOptions(field.name, entity.ObjectTypeCode).then((result: any) => {
           console.log(result);
         });
     });
@@ -179,31 +181,30 @@ export default class Component extends React.Component<
     let { batch } = this.state;
     if (batch.length > 0) {
       noofitemsdeleted = 0;
-      this._dataProvider.retrieveMultipleRecords(entityName, '?$top=40&$orderby=modifiedon desc').then((items) => {
+      this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
         //this.setState({ noofitems: items.length });
         this.setState({ noofitemstodelete: items.length });
         items.map((item: any) => {
           if (item["sabs_batch"] && item["sabs_batch"].length > 0 && item["sabs_batch"] == batch) {
+            setTimeout(() => {
+              this._dataProvider
+                .deleteRecord(entityName, item[entity._primaryIdAttribute])
+                .then((result: any) => {
+                  noofitemssucceeded++;
+                  noofitemsdeleted++;
+                  this.setState({ noofitemssucceeded, noofitemsdeleted });
+                  if (noofitems == noofitemssucceeded)
+                    this.resetAttributes();
 
-            this._dataProvider
-              .deleteRecord(entityName, item[entity._primaryIdAttribute])
-              .then((result: any) => {
-                noofitemssucceeded++;
-                noofitemsdeleted++;
-                this.setState({ noofitemssucceeded, noofitemsdeleted });
-                if (noofitems == noofitemssucceeded)
-                  this.resetAttributes();
-
-                if (this.state.noofitemstodelete == noofitemsdeleted) {
-                  setTimeout(() => {
+                  if (this.state.noofitemstodelete == noofitemsdeleted) {
                     this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
                     this._cds.getItems(entityName, fields).then((items) => {
                       console.log(items);
                       this.setState({ items });
                     });
-                  }, 3000);
-                }
-              });
+                  }
+                });
+            }, 3000);
           }
         });
       });
@@ -287,6 +288,9 @@ export default class Component extends React.Component<
             case AttributeType.Boolean.toString():
               value = getBooleanFieldKey(value.toString());
               break;
+            case AttributeType.DateTime.toString():
+              value = new Date(value);
+              break;
           }
 
           addPropertyToOobject(inputData, fieldName, value);
@@ -295,7 +299,7 @@ export default class Component extends React.Component<
       if (Object.keys(inputData).length > 0) {
 
         addPropertyToOobject(inputData, 'sabs_batch', batch)
-        //setTimeout(() => {
+        
         this._dataProvider
           .createRecord(entityName, inputData)
           .then((success: any) => {
@@ -306,31 +310,19 @@ export default class Component extends React.Component<
             setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
 
             if (noofitemssucceeded == len) {
-              // this._dataProvider.retrieveMultipleRecords(entityName).then(items => {
-              //   console.log(items);
-              //   this.setState({items});
-              // });
               this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
                 console.log(items);
                 this.setState({ items });
               });
 
-
               if (data.length > len)
-              setTimeout(() => {
-                this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
-              }, 3000);
+                setTimeout(() => {
+                  this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
+                }, 3000);
             }
           });
-
-        //}, 3000);
       }
     }
-
-    // data.map((item: any) => {
-
-    // });
-
   }
 
   private removeField(field: IField) {
@@ -345,14 +337,14 @@ export default class Component extends React.Component<
   }
 
   private addFields() {
-    let { fields, cdsFields, csvFields, choices, lookups } = this.state;
+    let { fields, cdsFields, csvFields, choices, lookups, entity } = this.state;
     var id = 1;
     fields = [];
     if (cdsFields.length > 0 && csvFields.length > 0) {
       csvFields.map((field) => {
         var cdsField = cdsFields.find(
           (cdsFld) =>
-            cdsFld.label && cdsFld.label.replace('/', ' ').replace(':', ' ').toLowerCase().split(' ').join('_') == field.label
+            cdsFld.label && cdsFld.label.replace('/', ' ').replace(':', ' ').replace('-', ' ').replace('/', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
           var newfield: IField = {
@@ -369,33 +361,36 @@ export default class Component extends React.Component<
 
           switch (cdsField.AttributeType) {
             case AttributeType.Picklist.toString():
-              this._dataProvider
-                .getOptions(cdsField.value)
-                .then((result: any) => {
-                  var ch = choices.find(
-                    (choice) => choice.key == newfield.name
-                  );
-                  if (ch) ch.value = result;
-                  else choices.push({ key: newfield.name, value: result });
-                });
+              var ch = choices.find(
+                choice => choice.key == newfield.name
+              );
+              if (!ch) {
+                this._dataProvider
+                  .getOptions(cdsField.value, entity.ObjectTypeCode)
+                  .then((result: any) => {
+                    choices.push({ key: newfield.name, value: result });
+                  });
+              }
               break;
             case AttributeType.Lookup.toString():
               if (cdsField.Targets && cdsField.Targets.length > 0) {
 
                 if (cdsField.Targets.length > 0)
                   cdsField.Targets.map((entityname: string) => {
-                    this.addLookup(entityname);
+                    this.addLookup(entityname, newfield.name);
                   });
               }
+              newfield.color = 'red';
               break;
-              case AttributeType.Customer.toString():
+            case AttributeType.Customer.toString():
               if (cdsField.Targets && cdsField.Targets.length > 0) {
 
                 if (cdsField.Targets.length > 0)
                   cdsField.Targets.map((entityname: string) => {
-                    this.addLookup(entityname);
+                    this.addLookup(entityname, newfield.name);
                   });
               }
+              newfield.color = 'red';
               break;
           }
         }
@@ -405,29 +400,68 @@ export default class Component extends React.Component<
     this.setState({ fields });
   }
 
-  private addLookup(entityname: string) {
+  private setFieldColor(name: string, color: string) {
+    let { fields } = this.state;
+    var field = fields.find(fld => fld.name == name);
+    if (field) {
+      field.color = color;
+      this.setState({ fields });
+    }
+    else alert(`Field ${field} does not exist`);
+  }
+
+  private addLookup(entityname: string, fieldname: string) {
+    this._dataProvider
+      .retrieveMultipleRecords(entityname, 'paging')
+      .then((result: any) => {
+        this._dataProvider
+          .getEntityMetadata(entityname, [])
+          .then((entity) => {
+            this.setLookupValue(entityname, result.entities, entity);
+            if (result.nextLink)
+              this.setPagingItems(result.nextLink, entityname, entity, fieldname);
+            else
+              this.setFieldColor(fieldname, 'green');
+          });
+      });
+  }
+
+  private setPagingItems(nextLink: string, entityname: string, entity: any, fieldname: string) {
+    this._dataProvider.getPagingEntities(nextLink).then((result: any) => {
+      this.setLookupValue(entityname, result.value, entity);
+
+      var nextLink = result["@odata.nextLink"];
+      if (nextLink)
+        this.setPagingItems(nextLink, entityname, entity, fieldname);
+      else
+        this.setFieldColor(fieldname, 'green')
+
+
+    });
+  }
+
+  private setLookupValue(entityname: string, items: any, entity: any) {
     let { lookups } = this.state;
     var lkup = lookups.find(
       (lookup) => lookup.key == entityname
     );
-    if (!lkup) {
-      this._dataProvider
-        .retrieveMultipleRecords(entityname)
-        .then((result: any) => {
-          this._dataProvider
-            .getEntityMetadata(entityname, [])
-            .then((entity) => {
-              var lkup = lookups.find(
-                (lookup) => lookup.key == entityname
-              );
-              lookups.push({
-                key: entityname,
-                value: result,
-                entity,
-              });
-            });
-        });
+    var value: ILookupEntity[] = [];
+    items.map((item: any) => {
+      value.push({ sabs_sabsid: item.sabs_sabsid, _primaryIdAttribute: item[entity.PrimaryIdAttribute] });
+    });
+    if (lkup) {
+      value = [...value, ...lkup.value];
+      lkup.value = value;
     }
+    else {
+      lookups.push({
+        key: entityname,
+        value,
+        entity: entity,
+      });
+    }
+
+    this.setState({ lookups });
   }
 
   private addField() {
@@ -484,6 +518,10 @@ export default class Component extends React.Component<
   };
 
   private setAttributes() { }
+
+  public _onTargetChanged(item: IDropdownOption) {
+    let {fields} = this.state;
+  }
 
   public _onChanged(item: IDropdownOption) {
     var entityName = item.key.toString();
@@ -626,6 +664,7 @@ export default class Component extends React.Component<
             <th>Type</th>
             <th>Schema</th>
             <th>Targets</th>
+            <th>MT</th>
             <th></th>
           </tr>
           <tr>
@@ -698,8 +737,21 @@ export default class Component extends React.Component<
           {field.schemaname}
         </td>
         {/* <td>Lookup Table Name: </td> */}
-        <td style={{ textAlign: "center", width: "20%" }}>
+        <td style={{ textAlign: "center", width: "20%", color: `${field.color ? field.color : ''}` }}>
           {field.targets ? field.targets.join(",") : ""}
+        </td>
+        <td>
+          <div>
+            {field.targets && field.targets.length == 2 &&
+              <Dropdown
+                defaultSelectedKey="broccoli"
+                options={[{ 'text': 'Contact', key: 'contact' }, { text: 'Account', key: 'account' }]}
+                disabled={false}
+                styles={dropdownStyles}
+                onChanged={this._onTargetChanged}
+              />
+            }
+          </div>
         </td>
         <td>
           <button onClick={() => this.removeField(field)}>Remove</button>
@@ -738,6 +790,8 @@ export interface IField {
   label: string;
   csvfield?: string;
   targets?: string[];
+  target?: string;
+  color?: string;
   choiceDataSet?: string;
   AttributeType?: string;
   schemaname: string;

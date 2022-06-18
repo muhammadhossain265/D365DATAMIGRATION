@@ -138,7 +138,7 @@ export function getPicklistItemValue(
 ): string {
   let choice = choices.find((choice) => choice.key == pickList);
   if (choice) {
-    var choiceItem = choice.value.find((item) => item.TypeText == choiceText);
+    var choiceItem = choice.value.find((item) => item.TypeText.toLowerCase() == choiceText.toLowerCase());
     if (choiceItem) return choiceItem.TypeCode;
     else
       alert(`Choice Item ${choiceText} does not exist in Choice ${pickList}`);
@@ -212,10 +212,9 @@ export function findLookupValue(lookups: ILookup[],
         //   break;
       }
     }
-    var itm = lookup.value.find((item: any) => item[fieldName] == value);
-    if (itm)
-      return `/${lookup.entity._entitySetName}(${itm[lookup.entity._primaryIdAttribute]
-        })`;
+    var itm = lookup.value.find((item: any) => item[fieldName] && item[fieldName].toLowerCase() == value.toString().toLowerCase());
+    if (!!itm)
+      return `/${lookup.entity._entitySetName}(${itm._primaryIdAttribute})`;
     //else alert(`Lookup Item ${value} does not exist in Lookup ${key}`);
   } else alert(`Lookup ${target} does not exist`);
 
@@ -298,6 +297,6 @@ export function getAttributeValue(name: string): any {
     var attribute = Xrm.Page.getAttribute(name);
     if (attribute)
       return attribute.getValue();
-      return '';
+    return '';
   }
 }

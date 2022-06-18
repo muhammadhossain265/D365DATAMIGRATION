@@ -23,3 +23,8 @@ export interface IAttribute {
   SchemaName: string;
   Targets?: string[];
 }
+
+export interface ILookupEntity {
+  sabs_sabsid: string;
+  _primaryIdAttribute: string;
+}

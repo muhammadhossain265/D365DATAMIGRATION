@@ -44,7 +44,8 @@ export default class CDSDataProvider implements ICDSDataProvider {
   ): Promise<any> {
     var options: string | undefined, optionSetFetch: string;
 
-    options = filter;
+    if (filter != 'paging')
+      options = filter;
 
     if (optionSet) {
       var objTypeTag = "";
@@ -69,6 +70,9 @@ export default class CDSDataProvider implements ICDSDataProvider {
       entity,
       options
     );
+
+    if (filter == 'paging')
+      return result;
     return result.entities;
   }
 
@@ -273,6 +277,53 @@ export default class CDSDataProvider implements ICDSDataProvider {
       req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
       req.send();
     });
+  }
+
+  getPagingEntities(url: string) {
+
+    var req = new XMLHttpRequest();
+    var baseUrl = this.getBaseUrl();
+
+    return new Promise(function (resolve, reject) {      
+      req.open(
+        "GET",
+        url,
+        true
+      );
+      req.onreadystatechange = function () {
+        if (req.readyState !== 4) return;
+        if (req.status >= 200 && req.status < 300) {
+          // If successful
+          try {
+            var result = JSON.parse(req.responseText);
+            if (parseInt(result.StatusCode) < 0) {
+              reject({
+                status: result.StatusCode,
+                statusText: result.StatusMessage,
+              });
+            }
+
+            
+
+            resolve(result);
+          } catch (error) {
+            throw error;
+          }
+        } else {
+          // If failed
+          reject({
+            status: req.status,
+            statusText: req.statusText,
+          });
+        }
+      };
+      req.setRequestHeader("OData-MaxVersion", "4.0");
+      req.setRequestHeader("OData-Version", "4.0");
+      req.setRequestHeader("Accept", "application/json");
+      req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+      req.send();
+    });
+
   }
 
   async getEntityMetadata(entityName: string, attributes: string[]) {

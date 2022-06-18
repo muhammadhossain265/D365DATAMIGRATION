@@ -21,6 +21,7 @@ export default interface ICDSDataProvider {
     onlyActivities: string,
     supportsActivities: string
   ): Promise<IDropdownOption[]>;
+  getPagingEntities(url: string): any;
 
   // getAssets: Promise<any>;
 }

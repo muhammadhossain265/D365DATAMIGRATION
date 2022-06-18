@@ -6,4 +6,5 @@ export enum AttributeType {
   String = "String",
   Customer = "Customer",
   Boolean = "Boolean",
+  DateTime = "DateTime"
 }
