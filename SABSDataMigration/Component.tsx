@@ -17,7 +17,7 @@ import {
   setAttributeValue,
   setObjectProperty,
 } from "./Utilities";
-import { IAttribute, IChoice, ILookup, ILookupEntity } from "./interfaces";
+import { IAttribute, IChoice, ILookup, ILookupEntity, IResponse } from "./interfaces";
 import { AttributeType } from "./enums";
 import {
   DetailsList,
@@ -26,6 +26,7 @@ import {
   IColumn,
   IDropdownOption,
   IDropdownStyles,
+  List,
   PrimaryButton,
 } from "@fluentui/react";
 import ICDS from "./DataProvider/ICDSD";
@@ -87,12 +88,17 @@ export default class Component extends React.Component<
       entities: entities,
       columns: [],
       items: [],
-      batch: batch
+      batch: batch,
+      errors: []
     };
   }
 
   private _dataProvider: ICDSDataProvider;
   private _cds: ICDS;
+
+  private addError() {
+
+  }
 
   private onChange(e: any, field: IField, fieldName: string) {
     let { fields, choices, entity } = this.state;
@@ -178,7 +184,7 @@ export default class Component extends React.Component<
   }
 
   private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
-    let { batch } = this.state;
+    let { batch, noofitemsfailed, errors } = this.state;
     if (batch.length > 0) {
       noofitemsdeleted = 0;
       this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
@@ -189,19 +195,26 @@ export default class Component extends React.Component<
             setTimeout(() => {
               this._dataProvider
                 .deleteRecord(entityName, item[entity._primaryIdAttribute])
-                .then((result: any) => {
-                  noofitemssucceeded++;
-                  noofitemsdeleted++;
-                  this.setState({ noofitemssucceeded, noofitemsdeleted });
-                  if (noofitems == noofitemssucceeded)
-                    this.resetAttributes();
+                .then((result: IResponse) => {
+                  if (result.errorCode) {
+                    noofitemsfailed++;
+                    errors.push(`SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`);
+                    this.setState({ noofitemsfailed, errors });
+                  }
+                  else {
+                    noofitemssucceeded++;
+                    noofitemsdeleted++;
+                    this.setState({ noofitemssucceeded, noofitemsdeleted });
+                    if (noofitems == noofitemssucceeded)
+                      this.resetAttributes();
 
-                  if (this.state.noofitemstodelete == noofitemsdeleted) {
-                    this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
-                    this._cds.getItems(entityName, fields).then((items) => {
-                      console.log(items);
-                      this.setState({ items });
-                    });
+                    if (this.state.noofitemstodelete == noofitemsdeleted) {
+                      this.deleteRecords(entityName, entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
+                      this._cds.getItems(entityName, fields).then((items) => {
+                        console.log(items);
+                        this.setState({ items });
+                      });
+                    }
                   }
                 });
             }, 3000);
@@ -252,6 +265,7 @@ export default class Component extends React.Component<
   }
 
   private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number, batch: string) {
+    let { errors } = this.state;
     var len = data.length > endIndex ? endIndex : data.length;
     for (let idx = startIndex; idx < len; idx++) {
       var item = data[idx]
@@ -299,26 +313,32 @@ export default class Component extends React.Component<
       if (Object.keys(inputData).length > 0) {
 
         addPropertyToOobject(inputData, 'sabs_batch', batch)
-        
+
         this._dataProvider
           .createRecord(entityName, inputData)
-          .then((success: any) => {
-            console.log(success);
-            noofitemssucceeded++;
-            this.setState({ noofitemssucceeded });
+          .then((result: IResponse) => {
+            if (result.errorCode) {
+              errors.push(`SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`);
+              noofitemsfailed++;
+              this.setState({ noofitemsfailed, errors });
+            }
+            else {
+              noofitemssucceeded++;
+              this.setState({ noofitemssucceeded });
 
-            setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
+              setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
 
-            if (noofitemssucceeded == len) {
-              this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
-                console.log(items);
-                this.setState({ items });
-              });
+              if (noofitemssucceeded == len) {
+                this._cds.getItems(entityName, fields, '?$top=40&$orderby=modifiedon desc').then((items) => {
+                  console.log(items);
+                  this.setState({ items });
+                });
 
-              if (data.length > len)
-                setTimeout(() => {
-                  this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
-                }, 3000);
+                if (data.length > len)
+                  setTimeout(() => {
+                    this.InsertRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, len, len + 40, batch);
+                  }, 3000);
+              }
             }
           });
       }
@@ -400,12 +420,24 @@ export default class Component extends React.Component<
     this.setState({ fields });
   }
 
-  private setFieldColor(name: string, color: string) {
-    let { fields } = this.state;
+  private setFieldColor(name: string, color: string, entityname: string) {
+    let { fields, lookups } = this.state;
+    var lookup = lookups.find(lkup => lkup.key == entityname)
+    if (lookup)
+      lookup.loaded = true;
     var field = fields.find(fld => fld.name == name);
+    var targetloaded = true;
+    this.setState({ lookups });
     if (field) {
-      field.color = color;
-      this.setState({ fields });
+      field.targets?.map(target => {
+        var trgt = lookups.find(lkup => lkup.key == target);
+        if (!trgt?.loaded)
+          targetloaded = false;
+      })
+      if (targetloaded) {
+        field.color = color;
+        this.setState({ fields });
+      }
     }
     else alert(`Field ${field} does not exist`);
   }
@@ -421,7 +453,7 @@ export default class Component extends React.Component<
             if (result.nextLink)
               this.setPagingItems(result.nextLink, entityname, entity, fieldname);
             else
-              this.setFieldColor(fieldname, 'green');
+              this.setFieldColor(fieldname, 'green', entityname);
           });
       });
   }
@@ -434,7 +466,7 @@ export default class Component extends React.Component<
       if (nextLink)
         this.setPagingItems(nextLink, entityname, entity, fieldname);
       else
-        this.setFieldColor(fieldname, 'green')
+        this.setFieldColor(fieldname, 'green', entityname)
 
 
     });
@@ -458,6 +490,7 @@ export default class Component extends React.Component<
         key: entityname,
         value,
         entity: entity,
+        loaded: false
       });
     }
 
@@ -519,8 +552,16 @@ export default class Component extends React.Component<
 
   private setAttributes() { }
 
-  public _onTargetChanged(item: IDropdownOption) {
-    let {fields} = this.state;
+  public _onTargetChanged(e: any, field: IField) {
+    let { fields } = this.state;
+    var fld = fields.find(fl => fl.name == field.name);
+    if (fld)
+      fld.targets = [e.key];
+    this.setState({ fields });
+    console.log(field);
+    // if (fld) {
+    //   fld.targets = 
+    // }
   }
 
   public _onChanged(item: IDropdownOption) {
@@ -603,7 +644,8 @@ export default class Component extends React.Component<
       items,
       columns,
       process,
-      batch
+      batch,
+      errors
     } = this.state;
     return (
       <div>
@@ -664,7 +706,7 @@ export default class Component extends React.Component<
             <th>Type</th>
             <th>Schema</th>
             <th>Targets</th>
-            <th>MT</th>
+            <th>Contact/Account</th>
             <th></th>
           </tr>
           <tr>
@@ -685,6 +727,13 @@ export default class Component extends React.Component<
         {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
 
         <br />
+        {
+          errors.length > 0 &&
+          <div style={{ color: 'red' }}>
+            Errors
+            <List items={errors} />
+          </div>
+        }
         <DetailsList
           items={items}
           compact={true}
@@ -740,15 +789,16 @@ export default class Component extends React.Component<
         <td style={{ textAlign: "center", width: "20%", color: `${field.color ? field.color : ''}` }}>
           {field.targets ? field.targets.join(",") : ""}
         </td>
-        <td>
+        <td style={{ width: "10%" }}>
           <div>
             {field.targets && field.targets.length == 2 &&
               <Dropdown
-                defaultSelectedKey="broccoli"
+                multiSelect={true}
+                defaultSelectedKeys={field.target ? field.targets : []}
                 options={[{ 'text': 'Contact', key: 'contact' }, { text: 'Account', key: 'account' }]}
                 disabled={false}
                 styles={dropdownStyles}
-                onChanged={this._onTargetChanged}
+                onChanged={e => this._onTargetChanged(e, field)}
               />
             }
           </div>
@@ -782,6 +832,7 @@ export interface IState {
   items: any;
   columns: IColumn[];
   batch: string;
+  errors: string[];
 }
 
 export interface IField {

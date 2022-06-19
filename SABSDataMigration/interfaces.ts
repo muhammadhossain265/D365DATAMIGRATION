@@ -9,6 +9,7 @@ export interface ILookup {
   key: string;
   value: any;
   entity: any;
+  loaded: boolean;
 }
 
 export interface IChoiceItem {
@@ -27,4 +28,10 @@ export interface IAttribute {
 export interface ILookupEntity {
   sabs_sabsid: string;
   _primaryIdAttribute: string;
+}
+
+export interface IResponse {
+  value?: any;
+  errorCode?:string;
+  message?: string;
 }

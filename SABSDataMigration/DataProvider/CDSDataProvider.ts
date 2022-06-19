@@ -1,5 +1,5 @@
 import { IField } from "./../Component";
-import { IAttribute, IChoiceItem } from "./../interfaces";
+import { IAttribute, IChoiceItem, IResponse } from "./../interfaces";
 import { IInputs } from "../generated/ManifestTypes";
 
 import ICDSDataProvider from "./ICDSDataProvider";
@@ -290,6 +290,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
         url,
         true
       );
+
       req.onreadystatechange = function () {
         if (req.readyState !== 4) return;
         if (req.status >= 200 && req.status < 300) {
@@ -301,9 +302,7 @@ export default class CDSDataProvider implements ICDSDataProvider {
                 status: result.StatusCode,
                 statusText: result.StatusMessage,
               });
-            }
-
-            
+            }            
 
             resolve(result);
           } catch (error) {
@@ -335,9 +334,26 @@ export default class CDSDataProvider implements ICDSDataProvider {
     return result;
   }
 
-  async createRecord(entity: string, data: any): Promise<string> {
+  async createRecord1(entity: string, data: any): Promise<string> {
     const result = await this.context.webAPI.createRecord(entity, data);
     return result.id;
+  }
+
+  async createRecord(entity: string, data: any): Promise<IResponse> {
+    var response: IResponse = {};
+    const result = await this.context.webAPI.createRecord(entity, data).then(
+      function success(result) {
+        response.value = result.id;
+        return response;
+      },
+      function (error) {
+        response.errorCode = error.errorCode;
+        response.message = error.message;
+        return response;
+      }
+    );
+
+    return Promise.resolve(result);
   }
 
   async updateRecord(entity: string, id: string, data: any): Promise<string> {
@@ -345,9 +361,20 @@ export default class CDSDataProvider implements ICDSDataProvider {
     return result.id;
   }
 
-  async deleteRecord(entity: string, id: string): Promise<string> {
-    const result = await this.context.webAPI.deleteRecord(entity, id);
-    return result.id;
+  async deleteRecord(entity: string, id: string): Promise<IResponse> {
+    var response: IResponse = {};
+    const result = await this.context.webAPI.deleteRecord(entity, id).then(
+      function success(result) {
+        response.value = result.id;
+        return response;
+      },
+      function (error) {
+        response.errorCode = error.errorCode;
+        response.message = error.message;
+        return response;
+      }
+    );
+    return result;
   }
 
   getBaseUrl(): string {
