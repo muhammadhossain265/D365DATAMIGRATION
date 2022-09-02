@@ -3,6 +3,7 @@ import { text } from "stream/consumers";
 import { IField } from "./Component";
 import ICDSDataProvider from "./DataProvider/ICDSDataProvider";
 import { AttributeType } from "./enums";
+import { clients } from "./Environments";
 import { FieldType } from "./FieldType";
 import { IChoice, ILookup } from "./interfaces";
 export function GetValue(value: any): any {
@@ -129,6 +130,24 @@ export function setObjectProperty(
   value: any
 ) {
   object[propertyName] = value;
+}
+
+export function getVirtualItemValue(
+  choices: IChoice[],
+  pickList: string,
+  choiceText: string
+): string {
+
+  let typecodes = '';
+  let values = choiceText.split(',');
+  values.map(pickl => {
+    if (typecodes.length > 0)
+      typecodes += ',';
+
+    typecodes += getPicklistItemValue(choices, pickList, pickl.trim());
+  });
+
+  return typecodes;
 }
 
 export function getPicklistItemValue(
@@ -282,6 +301,14 @@ export function getLocalDateAndTimeString(date: Date) {
   return '';
 }
 
+export function getLocalDateString(date: Date) {
+  if (date) {
+    return date.toLocaleDateString('en-au');
+  }
+
+  return '';
+}
+
 export function setAttributeValue(name: string, value: any) {
   if (value) {
     // @ts-ignore
@@ -299,4 +326,17 @@ export function getAttributeValue(name: string): any {
       return attribute.getValue();
     return '';
   }
+}
+export function isValidClient() {
+  var url = window.location.href;
+  var validclient = clients.find(client => url.includes(client.url));
+  if (validclient) {
+    if (validclient.exmpiry > new Date())
+      return true;
+    else alert(`Your Data Migration Tool subscription expired on ${getLocalDateString(validclient.exmpiry)}. \n Please contact Smart App Business Solutions Pty Ltd.`);
+    return false;
+  }
+  else
+    alert(`You do not have a valid subscription for Data Migration Tool.\n Please contact Smart App Business Solutions Pty Ltd.`);
+  return false;
 }

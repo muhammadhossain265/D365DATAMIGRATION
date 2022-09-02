@@ -1,0 +1,42 @@
+import { IDropdownOption } from "@fluentui/react";
+
+export const entities: IDropdownOption[] =
+    [{
+        key: "account",
+        text: "Account"
+    }, {
+        key: "ewosa_actionsubtype",
+        text: "Action Sub Type"
+    },
+    {
+        key: "ewosa_actiontype",
+        text: "Action Type"
+    }, {
+        key: "contact",
+        text: "Contact"
+    }, {
+        key: "incident",
+        text: "Case"
+    }, {
+        key: "ewosa_desiredoutcomeoption",
+        text: "Desired Outcome Option"
+    }, {
+        key: "ewosa_issue",
+        text: "Issue"
+    }, {
+        key: "ewosa_issuetier",
+        text: "Issue Tier"
+    }, {
+        key: "ewosa_issuetier",
+        text: "Issue Tier"
+    }, {
+        key: "ewosa_language",
+        text: "Language (EWOSA)"
+    }, {
+        key: "ewosa_producttype",
+        text: "Product Type"
+    }, {
+        key: "ewosa_vulnerabilitytier",
+        text: "Vulnerability Tier"
+    }
+    ];

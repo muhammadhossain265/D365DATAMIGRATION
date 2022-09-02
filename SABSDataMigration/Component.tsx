@@ -14,6 +14,8 @@ import {
   getLookupFieldValue,
   getPicklistItemValue,
   getPropertyValue,
+  getVirtualItemValue,
+  isValidClient,
   setAttributeValue,
   setObjectProperty,
 } from "./Utilities";
@@ -23,15 +25,18 @@ import {
   DetailsList,
   Dropdown,
   DropdownMenuItemType,
+  getTheme,
   IColumn,
   IDropdownOption,
   IDropdownStyles,
   List,
+  mergeStyleSets,
+  normalize,
   PrimaryButton,
 } from "@fluentui/react";
 import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
-import { entities } from "./Data";
+import { entities } from "./DataCTwo";
 import { text } from "stream/consumers";
 
 export default class Component extends React.Component<
@@ -198,7 +203,8 @@ export default class Component extends React.Component<
                 .then((result: IResponse) => {
                   if (result.errorCode) {
                     noofitemsfailed++;
-                    errors.push(`SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`);
+                    var error = `SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`;
+                    errors.push(error);
                     this.setState({ noofitemsfailed, errors });
                   }
                   else {
@@ -251,6 +257,10 @@ export default class Component extends React.Component<
         batch = 'SABS ' + getLocalDateAndTimeString(new Date);
         // @ts-ignore    
         Xrm.Page.getAttribute('sabs_batch').setValue(batch);
+
+        // @ts-ignore
+        Xrm.Page._data._entity.save();
+
         this.setState({ batch });
 
         let columns = getGridColumns(fields);
@@ -280,6 +290,9 @@ export default class Component extends React.Component<
         var fieldName = field.name;
         if (value) {
           switch (field.AttributeType) {
+            case AttributeType.Virtual.toString():
+              value = getVirtualItemValue(choices, fieldName, value);
+              break;
             case AttributeType.Picklist.toString():
               value = getPicklistItemValue(choices, fieldName, value);
               break;
@@ -318,7 +331,8 @@ export default class Component extends React.Component<
           .createRecord(entityName, inputData)
           .then((result: IResponse) => {
             if (result.errorCode) {
-              errors.push(`SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`);
+              var error = `SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`;
+              errors.push(error);
               noofitemsfailed++;
               this.setState({ noofitemsfailed, errors });
             }
@@ -381,6 +395,7 @@ export default class Component extends React.Component<
 
           switch (cdsField.AttributeType) {
             case AttributeType.Picklist.toString():
+            case AttributeType.Virtual.toString():
               var ch = choices.find(
                 choice => choice.key == newfield.name
               );
@@ -479,7 +494,10 @@ export default class Component extends React.Component<
     );
     var value: ILookupEntity[] = [];
     items.map((item: any) => {
-      value.push({ sabs_sabsid: item.sabs_sabsid, _primaryIdAttribute: item[entity.PrimaryIdAttribute] });
+      var lookupitm = { sabs_sabsid: item.sabs_sabsid, _primaryIdAttribute: item[entity.PrimaryIdAttribute] };
+      if (entityname == 'systemuser' && item['domainname'])
+        addPropertyToOobject(lookupitm, 'domainname', item['domainname']);
+      value.push(lookupitm);
     });
     if (lkup) {
       value = [...value, ...lkup.value];
@@ -626,6 +644,16 @@ export default class Component extends React.Component<
     });
   }
 
+  onRenderCell = (item: any, index: number | any): JSX.Element => {
+    return (
+      <div data-is-focusable>
+        <div className={styles.itemContent}>
+          {index + 1} &nbsp; {item}
+        </div>
+      </div>
+    );
+  };
+
   public componentDidMount() {
     // if (window.location.hostname != "localhost") {
     //   this._dataProvider.getEntities("All", "All").then((entities) => {
@@ -648,112 +676,116 @@ export default class Component extends React.Component<
       errors
     } = this.state;
     return (
-      <div>
-        <table width={"100%"}>
-          <tr className="header">
-            <th>Total Number of Items to {process}</th>
-            <th>Succeeded</th>
-            <th>Failed</th>
-          </tr>
-          <tr>
-            <td className="total">{noofitems}</td>
-            <td className="succeeded">{noofitemssucceeded}</td>
-            <td className="failed">{noofitemsfailed}</td>
-          </tr>
-        </table>
-        <table>
-          <tr>
-            <td>
-              <Dropdown
-                label="Table"
-                defaultSelectedKey="broccoli"
-                options={entities}
-                disabled={false}
-                styles={dropdownStyles}
-                onChanged={this._onChanged}
-              />
-              {/* <input
+      <>
+        {isValidClient() &&
+          <div>
+            <table width={"100%"}>
+              <tr className="header">
+                <th>Total Number of Items to {process}</th>
+                <th>Succeeded</th>
+                <th>Failed</th>
+              </tr>
+              <tr>
+                <td className="total">{noofitems}</td>
+                <td className="succeeded">{noofitemssucceeded}</td>
+                <td className="failed">{noofitemsfailed}</td>
+              </tr>
+            </table>
+            <table>
+              <tr>
+                <td>
+                  <Dropdown
+                    label="Table"
+                    defaultSelectedKey="broccoli"
+                    options={entities}
+                    disabled={false}
+                    styles={dropdownStyles}
+                    onChanged={this._onChanged}
+                  />
+                  {/* <input
                 onChange={(value) => this.onTextChange(value, "entityName")}
               /> */}
-            </td>
-            <td>&nbsp;&nbsp;&nbsp;</td>
-            <td>
-              <CSVReader
-                cssClass="react-csv-input"
-                // label="Choose file"
-                onFileLoaded={this.handleForce}
-                parserOptions={this.papaparseOptions}
-              />
-            </td>
-            <td>&nbsp;&nbsp;</td>
-            <td>
-              <br />
+                </td>
+                <td>&nbsp;&nbsp;&nbsp;</td>
+                <td>
+                  <CSVReader
+                    cssClass="react-csv-input"
+                    // label="Choose file"
+                    onFileLoaded={this.handleForce}
+                    parserOptions={this.papaparseOptions}
+                  />
+                </td>
+                <td>&nbsp;&nbsp;</td>
+                <td>
+                  <br />
 
-              {batch.length == 0 && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
-              &nbsp;&nbsp;
-              {batch.length > 0 &&
-                <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
-              }
-            </td>
-          </tr>
-        </table>
-        {/* <button onClick={this.buttonClick}>click me</button> */}
-        <br />
-        <table width="100%">
-          <tr>
-            <th>CDS Field</th>
-            <th>CSV Field</th>
-            <th>Type</th>
-            <th>Schema</th>
-            <th>Targets</th>
-            <th>Contact/Account</th>
-            <th></th>
-          </tr>
-          <tr>
-            <td>&nbsp;</td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          {fields.map((field) => this._row(field))}
-        </table>
-        <br />
-        {/* <PrimaryButton text="Add Field" onClick={this.addField} allowDisabledFocus /> */}
-        <br />
-        {/* <br />
+                  {batch.length == 0 && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
+                  &nbsp;&nbsp;
+                  {batch.length > 0 &&
+                    <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
+                  }
+                </td>
+              </tr>
+            </table>
+            {/* <button onClick={this.buttonClick}>click me</button> */}
+            <br />
+            <table width="100%">
+              <tr>
+                <th>CDS Field</th>
+                <th>CSV Field</th>
+                <th>Type</th>
+                <th>Schema</th>
+                <th>Targets</th>
+                <th>Contact/Account</th>
+                <th></th>
+              </tr>
+              <tr>
+                <td>&nbsp;</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              {fields.map((field) => this._row(field))}
+            </table>
+            <br />
+            {/* <PrimaryButton text="Add Field" onClick={this.addField} allowDisabledFocus /> */}
+            <br />
+            {/* <br />
         <br /> */}
-        {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
+            {/* <button onClick={this.getRelatedData}>Get Related Data</button> */}
 
-        <br />
-        {
-          errors.length > 0 &&
-          <div style={{ color: 'red' }}>
-            Errors
-            <List items={errors} />
+            <br />
+            {
+              errors.length > 0 &&
+              <div style={{ color: 'red' }}>
+                Errors
+                <List items={errors} onRenderCell={this.onRenderCell} />
+              </div>
+            }
+            <DetailsList
+              items={items}
+              compact={true}
+              columns={columns}
+            // onRenderItemColumn={this._renderItemColumn}
+            // selectionMode={SelectionMode.multiple}
+            // getKey={this._getKey}
+            // setKey="multiple"
+            // layoutMode={DetailsListLayoutMode.justified}
+            // isHeaderVisible={true}
+            // selection={this._selection}
+            // selectionPreservedOnEmptyClick={true}
+            // onItemInvoked={this._onItemInvoked}
+            // enterModalSelectionOnTouch={true}
+            // ariaLabelForSelectionColumn="Toggle selection"
+            // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
+            // checkButtonAriaLabel="select row"
+            // onRenderDetailsFooter={this._onRenderDetailsFooter}
+            />
           </div>
         }
-        <DetailsList
-          items={items}
-          compact={true}
-          columns={columns}
-        // onRenderItemColumn={this._renderItemColumn}
-        // selectionMode={SelectionMode.multiple}
-        // getKey={this._getKey}
-        // setKey="multiple"
-        // layoutMode={DetailsListLayoutMode.justified}
-        // isHeaderVisible={true}
-        // selection={this._selection}
-        // selectionPreservedOnEmptyClick={true}
-        // onItemInvoked={this._onItemInvoked}
-        // enterModalSelectionOnTouch={true}
-        // ariaLabelForSelectionColumn="Toggle selection"
-        // ariaLabelForSelectAllCheckbox="Toggle selection for all items"
-        // checkButtonAriaLabel="select row"
-        // onRenderDetailsFooter={this._onRenderDetailsFooter}
-        />
-      </div>
+      </>
     );
   }
 
@@ -863,3 +895,35 @@ export interface IEntity {
 const dropdownStyles: Partial<IDropdownStyles> = {
   dropdown: { width: 300 },
 };
+
+const theme = getTheme();
+const styles = mergeStyleSets({
+  container: {
+    overflow: "auto",
+    maxHeight: 400,
+    border: "1px solid #CCC",
+    margin: 20,
+    selectors: {
+      ".ms-List-cell:nth-child(odd)": {
+        height: 50,
+        lineHeight: 50,
+        background: theme.palette.neutralLighter,
+      },
+      ".ms-List-cell:nth-child(even)": {
+        height: 25,
+        lineHeight: 25,
+      },
+    },
+  },
+  itemContent: [
+    theme.fonts.medium,
+    normalize,
+    {
+      position: "relative",
+      boxSizing: "border-box",
+      display: "block",
+      borderLeft: "3px solid " + theme.palette.themePrimary,
+      paddingLeft: 27,
+    },
+  ],
+});
