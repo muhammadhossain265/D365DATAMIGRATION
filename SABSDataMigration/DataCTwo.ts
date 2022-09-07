@@ -54,6 +54,9 @@ export const entities: IDropdownOption[] =
         key: "ewosa_systemicissue",
         text: "Systemic Issue"
     }, {
+        key: "ewosa_testtable",
+        text: "Test Table"
+    }, {
         key: "ewosa_vulnerabilitytier",
         text: "Vulnerability Tier"
     }
