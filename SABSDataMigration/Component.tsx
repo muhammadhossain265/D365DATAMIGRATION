@@ -792,6 +792,12 @@ export default class Component extends React.Component<
   private _row(field: IField) {
     let { cdsFields, csvFields } = this.state;
 
+    var targets: any = [];
+    if (field.targets && field.targets.length > 1) {
+      field.targets.map(target => {
+        targets.push({key: target, text: target })
+      });      
+    }
     return (
       <tr>
         {/* <td>Field Name: </td> */}
@@ -823,11 +829,11 @@ export default class Component extends React.Component<
         </td>
         <td style={{ width: "10%" }}>
           <div>
-            {field.targets && field.targets.length == 2 &&
+            {targets.length > 1 &&
               <Dropdown
                 multiSelect={true}
                 defaultSelectedKeys={field.target ? field.targets : []}
-                options={[{ 'text': 'Contact', key: 'contact' }, { text: 'Account', key: 'account' }]}
+                options={targets}
                 disabled={false}
                 styles={dropdownStyles}
                 onChanged={e => this._onTargetChanged(e, field)}

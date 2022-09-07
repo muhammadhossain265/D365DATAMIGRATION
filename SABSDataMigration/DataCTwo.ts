@@ -15,6 +15,9 @@ export const entities: IDropdownOption[] =
         key: "ewosa_actiontype",
         text: "Action Type"
     }, {
+        key: "ewosa_associate",
+        text: "Associate"
+    }, {
         key: "contact",
         text: "Contact"
     }, {
