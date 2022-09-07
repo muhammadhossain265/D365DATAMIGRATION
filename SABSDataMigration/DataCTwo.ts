@@ -30,9 +30,6 @@ export const entities: IDropdownOption[] =
         key: "ewosa_issuetier",
         text: "Issue Tier"
     }, {
-        key: "ewosa_issuetier",
-        text: "Issue Tier"
-    }, {
         key: "ewosa_language",
         text: "Language (EWOSA)"
     }, {
@@ -50,5 +47,12 @@ export const entities: IDropdownOption[] =
     }, {
         key: "ewosa_vulnerabilitytier",
         text: "Vulnerability Tier"
+    }, {
+        key: "ewosa_casedesiredoutcome",
+        text: "Case Desired Outcome"
+    }, {
+        key: "ewosa_desiredoutcomeoption",
+        text: "Desired Outcome Option"
     }
+
     ];
