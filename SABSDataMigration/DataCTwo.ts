@@ -53,6 +53,9 @@ export const entities: IDropdownOption[] =
     }, {
         key: "ewosa_action",
         text: "Action"
+    }, {
+        key: "ewosa_investigationprocess",
+        text: "Investigation Process"
     }
 
     ];
