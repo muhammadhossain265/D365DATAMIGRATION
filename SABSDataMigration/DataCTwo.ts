@@ -51,8 +51,8 @@ export const entities: IDropdownOption[] =
         key: "ewosa_casedesiredoutcome",
         text: "Case Desired Outcome"
     }, {
-        key: "ewosa_desiredoutcomeoption",
-        text: "Desired Outcome Option"
+        key: "ewosa_action",
+        text: "Action"
     }
 
     ];
