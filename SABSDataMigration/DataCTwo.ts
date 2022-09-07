@@ -5,6 +5,9 @@ export const entities: IDropdownOption[] =
         key: "account",
         text: "Account"
     }, {
+        key: "ewosa_action",
+        text: "Action"
+    }, {
         key: "ewosa_actionsubtype",
         text: "Action Sub Type"
     },
@@ -18,11 +21,17 @@ export const entities: IDropdownOption[] =
         key: "incident",
         text: "Case"
     }, {
+        key: "ewosa_casedesiredoutcome",
+        text: "Case Desired Outcome"
+    }, {
         key: "ewosa_desiredoutcomeoption",
         text: "Desired Outcome Option"
     }, {
         key: "ewosa_industrycontact",
         text: "Industry contact"
+    }, {
+        key: "ewosa_investigationprocess",
+        text: "Investigation Process"
     }, {
         key: "ewosa_issue",
         text: "Issue"
@@ -39,23 +48,13 @@ export const entities: IDropdownOption[] =
         key: "ewosa_producttype",
         text: "Product Type"
     }, {
-        key: "ewosa_regulator ",
+        key: "ewosa_regulator",
         text: "Regulator"
     }, {
-        key: "ewosa_systemicissue ",
+        key: "ewosa_systemicissue",
         text: "Systemic Issue"
     }, {
         key: "ewosa_vulnerabilitytier",
         text: "Vulnerability Tier"
-    }, {
-        key: "ewosa_casedesiredoutcome",
-        text: "Case Desired Outcome"
-    }, {
-        key: "ewosa_action",
-        text: "Action"
-    }, {
-        key: "ewosa_investigationprocess",
-        text: "Investigation Process"
     }
-
     ];
