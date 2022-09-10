@@ -62,5 +62,8 @@ export const entities: IDropdownOption[] =
     }, {
         key: "ewosa_vulnerabilitytier",
         text: "Vulnerability Tier"
+    }, {
+        key: "sabs_Test",
+        text: "Data Migration Test"
     }
     ];

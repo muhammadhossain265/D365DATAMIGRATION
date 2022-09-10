@@ -67,6 +67,7 @@ export default class Component extends React.Component<
     this.onChange = this.onChange.bind(this);
     this._onChanged = this._onChanged.bind(this);
     this.clearTable = this.clearTable.bind(this);
+    this.test = this.test.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
 
@@ -161,6 +162,29 @@ export default class Component extends React.Component<
     setAttributeValue('sabs_totalnumberofitemssucceeded', 0);
     setAttributeValue('sabs_totalnumberofitemstoadd', 0);
     setAttributeValue('sabs_batch', '');
+  }
+
+  private test() {
+    var entityname: string = '';
+    var data: any;
+    if (entityname.length > 0 && data) {
+      this._dataProvider.createRecord(entityname, data).then((response: any) => {
+        console.log(response);
+      });
+    }
+
+    if (entityname.length > 0) {
+      this._dataProvider.retrieveMultipleRecords(entityname).then((response: any) => {
+        console.log(response);
+      });
+    }
+
+    if (entityname.length > 0) {
+      var id = '';
+      this._dataProvider.retrieveRecord(entityname, id).then((response: any) => {
+        console.log(response);
+      });
+    }
   }
 
   private clearTable() {
@@ -298,7 +322,13 @@ export default class Component extends React.Component<
               break;
             case AttributeType.Lookup.toString():
               value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
-              fieldName = field.schemaname + "@odata.bind";
+              var schema = field.schemaname;
+              if (field.targets && field.targets.length > 1 && value && value.length > 0) {
+                var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
+                if (schma && schma.length > 0)
+                schema += `_${schma}`;
+              }
+              fieldName = `${schema}@odata.bind`;
               if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
                 fieldName = `${field.schemaname}@odata.bind`;
               break;
@@ -724,6 +754,7 @@ export default class Component extends React.Component<
                   {batch.length > 0 &&
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
                   }
+                  <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
               </tr>
             </table>
@@ -795,8 +826,8 @@ export default class Component extends React.Component<
     var targets: any = [];
     if (field.targets && field.targets.length > 1) {
       field.targets.map(target => {
-        targets.push({key: target, text: target })
-      });      
+        targets.push({ key: target, text: target })
+      });
     }
     return (
       <tr>
