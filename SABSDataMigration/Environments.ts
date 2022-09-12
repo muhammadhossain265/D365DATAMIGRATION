@@ -4,7 +4,7 @@ export const clients: client[] =
         exmpiry: new Date(2022, 8, 30)
     }, {
         url: "https://uatewosa.crm6.dynamics.com",
-        exmpiry: new Date(2022, 8, 10)
+        exmpiry: new Date(2022, 8, 20)
     }
     ];
 
