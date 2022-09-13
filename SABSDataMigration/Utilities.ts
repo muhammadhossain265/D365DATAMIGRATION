@@ -85,9 +85,9 @@ export function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key
 ): (
-    a: { [key in Key]: number | string },
-    b: { [key in Key]: number | string }
-  ) => number {
+  a: { [key in Key]: number | string },
+  b: { [key in Key]: number | string }
+) => number {
   return order === "desc"
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -340,3 +340,18 @@ export function isValidClient() {
     alert(`You do not have a valid subscription for Data Migration Tool.\n Please contact Smart App Business Solutions Pty Ltd.`);
   return false;
 }
+
+// new Date().toLocaleTimeString()
+// for (let i = 0; i < 500; i++) {
+//   task(i);
+//   if (i == 499)
+//   new Date().toLocaleTimeString()
+// }
+
+
+// function task(i: number) {
+//   var interval = i % 50 == 0 ? 2000 : 0;
+//   setTimeout(function () {
+//     console.log(i);
+//   }, interval);
+// }
