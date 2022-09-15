@@ -236,7 +236,7 @@ export default class Component extends React.Component<
                     noofitemsfailed++;
                     var error = `SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`;
                     errors.push(error);
-                    faileditems.push({SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string})
+                    faileditems.push({ SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string })
                     this.setState({ noofitemsfailed, errors, faileditems });
                   }
                   else {
@@ -265,7 +265,7 @@ export default class Component extends React.Component<
   }
 
   private _exporterror() {
-    let {faileditems} = this.state;
+    let { faileditems } = this.state;
     exportExcelCS(faileditems, 'Errors.csv');
   }
 
@@ -367,6 +367,9 @@ export default class Component extends React.Component<
                 validationfailed += 1;
               break;
             case AttributeType.Lookup.toString():
+            case AttributeType.Owner.toString():
+              // if (field.AttributeType == AttributeType.Owner.toString())
+              //   field.targets = ['systemuser'];
               value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
               if (!value || value.length == 0)
                 validationfailed += 1;
@@ -398,13 +401,13 @@ export default class Component extends React.Component<
             case AttributeType.DateTime.toString():
               value = new Date(value);
               break;
-          }          
+          }
         }
       });
     });
 
-    if (validationfailed == 0) 
-    this.setState({validated: true});
+    if (validationfailed == 0)
+      this.setState({ validated: true });
   }
 
   private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number, batch: string) {
@@ -430,6 +433,9 @@ export default class Component extends React.Component<
               value = getPicklistItemValue(choices, fieldName, value);
               break;
             case AttributeType.Lookup.toString():
+            case AttributeType.Owner.toString():
+              if (field.AttributeType == AttributeType.Owner.toString())
+                field.targets = ['systemuser'];
               value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
               var schema = field.schemaname;
               if (field.targets && field.targets.length > 1 && value && value.length > 0) {
@@ -472,7 +478,7 @@ export default class Component extends React.Component<
             if (result.errorCode) {
               var error = `SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`;
               errors.push(error);
-              faileditems.push({SABSID: getPropertyValue(inputData, 'sabs_sabsid'), Error: result.message as string});                    
+              faileditems.push({ SABSID: getPropertyValue(inputData, 'sabs_sabsid'), Error: result.message as string });
               noofitemsfailed++;
               this.setState({ noofitemsfailed, errors, faileditems });
             }
@@ -530,8 +536,16 @@ export default class Component extends React.Component<
             targets: cdsField.Targets,
             schemaname: cdsField.SchemaName ? cdsField.SchemaName : ''
           };
-          fields.push(newfield);
+
+          if (newfield.name) {
+            fields.push(newfield);
+            if (newfield.name == 'ownerid') {
+              newfield.targets = ['systemuser'];
+              newfield.schemaname = 'ownerid';
+            }
+          }
           id++;
+
 
           switch (cdsField.AttributeType) {
             case AttributeType.Picklist.toString():
@@ -566,6 +580,9 @@ export default class Component extends React.Component<
                   });
               }
               newfield.color = 'red';
+              break;
+            case AttributeType.Owner.toString():
+              this.addLookup('systemuser', 'ownerid');
               break;
           }
         }
@@ -799,7 +816,7 @@ export default class Component extends React.Component<
     //   this._dataProvider.getEntities("All", "All").then((entities) => {
     //     this.setState({ entities });
     //   });
-    // }
+    // }    
   }
 
   public render() {
@@ -867,13 +884,13 @@ export default class Component extends React.Component<
                   {batch.length > 0 &&
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
                   } &nbsp;&nbsp;
-                   {batch.length > 0 && faileditems.length > 0 &&
+                  {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
               </tr>
-            </table>            
+            </table>
             <br />
             <table width="100%">
               <tr>
