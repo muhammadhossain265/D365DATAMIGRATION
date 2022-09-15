@@ -35,3 +35,8 @@ export interface IResponse {
   errorCode?:string;
   message?: string;
 }
+
+export interface IError {
+  SABSID: string;
+  Error: string;
+}

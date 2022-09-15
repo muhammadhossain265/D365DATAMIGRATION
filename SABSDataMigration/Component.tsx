@@ -19,7 +19,7 @@ import {
   setAttributeValue,
   setObjectProperty,
 } from "./Utilities";
-import { IAttribute, IChoice, ILookup, ILookupEntity, IResponse } from "./interfaces";
+import { IAttribute, IChoice, IError, ILookup, ILookupEntity, IResponse } from "./interfaces";
 import { AttributeType } from "./enums";
 import {
   DetailsList,
@@ -38,6 +38,8 @@ import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
 import { entities } from "./DataCTwo";
 import { text } from "stream/consumers";
+import { fail } from "assert";
+import { exportExcelCS } from "./xlsxutilities";
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -70,6 +72,8 @@ export default class Component extends React.Component<
     this.test = this.test.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
+    this._validate = this._validate.bind(this);
+    this._exporterror = this._exporterror.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
     this._cds = new CDS(props);
@@ -95,7 +99,10 @@ export default class Component extends React.Component<
       columns: [],
       items: [],
       batch: batch,
-      errors: []
+      errors: [],
+      faileditems: [],
+      validationinprogress: false,
+      validated: false
     };
   }
 
@@ -213,7 +220,7 @@ export default class Component extends React.Component<
   }
 
   private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
-    let { batch, noofitemsfailed, errors } = this.state;
+    let { batch, noofitemsfailed, errors, faileditems } = this.state;
     if (batch.length > 0) {
       noofitemsdeleted = 0;
       this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
@@ -229,7 +236,8 @@ export default class Component extends React.Component<
                     noofitemsfailed++;
                     var error = `SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`;
                     errors.push(error);
-                    this.setState({ noofitemsfailed, errors });
+                    faileditems.push({SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string})
+                    this.setState({ noofitemsfailed, errors, faileditems });
                   }
                   else {
                     noofitemssucceeded++;
@@ -254,6 +262,40 @@ export default class Component extends React.Component<
       return { noofitemssucceeded, noofitemsdeleted };
     }
     else alert('Bath number is missing');
+  }
+
+  private _exporterror() {
+    let {faileditems} = this.state;
+    exportExcelCS(faileditems, 'Errors.csv');
+  }
+
+  private _validate() {
+    let {
+      data,
+      fields,
+      choices,
+      lookups,
+      entityName,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      entities,
+      batch
+    } = this.state;
+
+
+    var entity = entities.find((item: IDropdownOption) => item.key == entityName);
+    if (entity) {
+      if (batch.length == 0) {
+        let columns = getGridColumns(fields);
+        this.setState({ process: "Add", columns });
+        noofitemssucceeded = 0;
+        noofitemsfailed = 0;
+        if (data.length > 0 && fields.length > 0) {
+          this.ValidateRows(data, fields, choices, lookups, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, 40, batch);
+        }
+      }
+    }
   }
 
   private importToCDS() {
@@ -298,8 +340,75 @@ export default class Component extends React.Component<
     }
   }
 
+  private ValidateRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number, batch: string) {
+    var len = data.length;
+    var validationfailed = 0
+
+    data.map((item: any) => {
+      var inputData = {};
+      fields.map((field: IField) => {
+        if (field.name &&
+          field.name != "" &&
+          field.csvfield &&
+          field.csvfield != "")
+          if (item[field.csvfield])
+            var value = item[field.csvfield];
+        var fieldName = field.name;
+        if (value) {
+          switch (field.AttributeType) {
+            case AttributeType.Virtual.toString():
+              value = getVirtualItemValue(choices, fieldName, value);
+              if (!value || value.length == 0)
+                validationfailed += 1;
+              break;
+            case AttributeType.Picklist.toString():
+              value = getPicklistItemValue(choices, fieldName, value);
+              if (!value || value.length == 0)
+                validationfailed += 1;
+              break;
+            case AttributeType.Lookup.toString():
+              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+              if (!value || value.length == 0)
+                validationfailed += 1;
+              var schema = field.schemaname;
+              if (field.targets && field.targets.length > 1 && value && value.length > 0) {
+                var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
+                if (schma && schma.length > 0)
+                  schema += `_${schma}`;
+              }
+              fieldName = `${schema}@odata.bind`;
+              if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
+                fieldName = `${field.schemaname}@odata.bind`;
+              break;
+            case AttributeType.Customer.toString():
+              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+              if (!value || value.length == 0)
+                validationfailed += 1;
+              if (value.indexOf('contacts') > 0)
+                fieldName += "_contact@odata.bind";
+              else
+                fieldName += "_account@odata.bind";
+              break;
+            case AttributeType.String.toString():
+              value = value.toString();
+              break;
+            case AttributeType.Boolean.toString():
+              value = getBooleanFieldKey(value.toString());
+              break;
+            case AttributeType.DateTime.toString():
+              value = new Date(value);
+              break;
+          }          
+        }
+      });
+    });
+
+    if (validationfailed == 0) 
+    this.setState({validated: true});
+  }
+
   private InsertRows(data: any, fields: IField[], choices: IChoice[], lookups: ILookup[], entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, startIndex: number, endIndex: number, batch: string) {
-    let { errors } = this.state;
+    let { errors, faileditems } = this.state;
     var len = data.length > endIndex ? endIndex : data.length;
     for (let idx = startIndex; idx < len; idx++) {
       var item = data[idx]
@@ -326,7 +435,7 @@ export default class Component extends React.Component<
               if (field.targets && field.targets.length > 1 && value && value.length > 0) {
                 var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
                 if (schma && schma.length > 0)
-                schema += `_${schma}`;
+                  schema += `_${schma}`;
               }
               fieldName = `${schema}@odata.bind`;
               if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
@@ -363,8 +472,9 @@ export default class Component extends React.Component<
             if (result.errorCode) {
               var error = `SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`;
               errors.push(error);
+              faileditems.push({SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string});                    
               noofitemsfailed++;
-              this.setState({ noofitemsfailed, errors });
+              this.setState({ noofitemsfailed, errors, faileditems });
             }
             else {
               noofitemssucceeded++;
@@ -703,7 +813,9 @@ export default class Component extends React.Component<
       columns,
       process,
       batch,
-      errors
+      errors,
+      validated,
+      faileditems
     } = this.state;
     return (
       <>
@@ -748,17 +860,20 @@ export default class Component extends React.Component<
                 <td>&nbsp;&nbsp;</td>
                 <td>
                   <br />
-
-                  {batch.length == 0 && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
+                  {batch.length == 0 && !validated && <PrimaryButton text="Validate" onClick={this._validate} allowDisabledFocus />}
+                  &nbsp;&nbsp;
+                  {batch.length == 0 && validated && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
                   &nbsp;&nbsp;
                   {batch.length > 0 &&
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
-                  }
+                  } &nbsp;&nbsp;
+                   {batch.length > 0 && faileditems.length > 0 &&
+                    <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
+                  } &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
               </tr>
-            </table>
-            {/* <button onClick={this.buttonClick}>click me</button> */}
+            </table>            
             <br />
             <table width="100%">
               <tr>
@@ -902,6 +1017,9 @@ export interface IState {
   columns: IColumn[];
   batch: string;
   errors: string[];
+  faileditems: IError[];
+  validationinprogress: boolean;
+  validated: boolean;
 }
 
 export interface IField {
