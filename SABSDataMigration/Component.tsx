@@ -472,7 +472,7 @@ export default class Component extends React.Component<
             if (result.errorCode) {
               var error = `SABSID: ${getPropertyValue(inputData, 'sabs_sabsid')} error: ${result.message}`;
               errors.push(error);
-              faileditems.push({SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string});                    
+              faileditems.push({SABSID: getPropertyValue(inputData, 'sabs_sabsid'), Error: result.message as string});                    
               noofitemsfailed++;
               this.setState({ noofitemsfailed, errors, faileditems });
             }
