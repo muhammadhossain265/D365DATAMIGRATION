@@ -27,6 +27,11 @@ export const entities: IDropdownOption[] =
         key: "ewosa_casedesiredoutcome",
         text: "Case Desired Outcome"
     }, {
+        key: "incidentresolution",
+        text: "Case Resolution"
+    },
+    
+    {
         key: "ewosa_desiredoutcomeoption",
         text: "Desired Outcome Option"
     }, {
