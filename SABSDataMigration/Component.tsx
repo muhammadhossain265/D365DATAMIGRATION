@@ -461,7 +461,9 @@ export default class Component extends React.Component<
               value = getBooleanFieldKey(value.toString());
               break;
             case AttributeType.DateTime.toString():
-              value = new Date(value);
+              var dateonlyfields = ['Due Date'];
+              if (!dateonlyfields.find(fld => fld == field.label))
+                value = new Date(value);
               break;
           }
 
