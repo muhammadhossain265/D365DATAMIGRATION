@@ -443,12 +443,11 @@ export default class Component extends React.Component<
                 if (schma && schma.length > 0)
                   schema += `_${schma}`;
               }
+              if (schema == "ParentCaseId")
+                schema = 'parentcaseid';
               fieldName = `${schema}@odata.bind`;
-              if (field.targets && field.targets[0] == 'systemuser' && field.schemaname) {
-                if (field.schemaname == "ParentCaseId")
-                  fieldName = `parentcaseid@odata.bind`;
+              if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
                 fieldName = `${field.schemaname}@odata.bind`;
-              }
               break;
             case AttributeType.Customer.toString():
               value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
