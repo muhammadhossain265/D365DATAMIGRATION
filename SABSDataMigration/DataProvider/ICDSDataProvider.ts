@@ -22,6 +22,6 @@ export default interface ICDSDataProvider {
     supportsActivities: string
   ): Promise<IDropdownOption[]>;
   getPagingEntities(url: string): any;
-
+  relaterow(entity: string, id: string, relationship: string, value: string): Promise<boolean>
   // getAssets: Promise<any>;
 }

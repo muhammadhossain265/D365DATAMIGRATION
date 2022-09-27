@@ -19,7 +19,51 @@ export default class CDS implements ICDS {
 
   private _dataProvider: ICDSDataProvider;
   private context: ComponentFramework.Context<IInputs>;
-  
+
+  closecase(incident: any): Promise<any> {
+
+    var incidentresolution = {
+      "subject": 'Closed as part of Data Migation',
+      "incidentid@odata.bind": `/incidents(${incident.incidentid})`,
+      "timespent": incident.ewosa_timespent? incident.ewosa_timespent: 0,
+      "description": 'Closed as part of Data Migaration'
+    };
+
+    var parameters = {
+      "IncidentResolution": incidentresolution,
+      "Status": -1
+    };
+
+    var req = new XMLHttpRequest();
+    return new Promise(function (resolve, reject) {
+      var url = window.location.origin + "/api/data/v9.2/CloseIncident";
+      req.open("POST", url, true);
+      req.setRequestHeader("OData-MaxVersion", "4.0");
+      req.setRequestHeader("OData-Version", "4.0");
+      req.setRequestHeader("Accept", "application/json");
+      req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+      req.onreadystatechange = function () {
+        if (this.readyState === 4) {
+          req.onreadystatechange = null;
+          if (this.status === 204) {
+            resolve(req.responseText);
+          } else {
+            resolve(this.responseText);
+          }
+        }
+      };
+
+      req.send(JSON.stringify(parameters));
+    });
+  }
+
+  getactivecases(top?: number): Promise<any> {
+    var filter = '?$filter=statecode eq 0';
+    if (top)
+      filter += `&$top=${top}`;
+    return this._dataProvider.retrieveMultipleRecords('incident', filter);
+  }
+
 
   getItems(entity: string, fields: IField[], filter?: string): Promise<any> {
     return this._dataProvider
@@ -27,10 +71,8 @@ export default class CDS implements ICDS {
       .then((result) => {
         return result.map((activity: any) => {
           return parseObj(activity, fields);
-          
+
         });
       });
-
-    //throw new TypeError("No implemented");
   }
 }

@@ -7,6 +7,7 @@ import { getPropertyValue, setObjectProperty } from "../Utilities";
 import { IDropdownOption } from "@fluentui/react";
 import { AttributeType } from "../enums";
 import { resolve } from "path";
+import { url } from "inspector";
 
 export default class CDSDataProvider implements ICDSDataProvider {
   constructor(context: ComponentFramework.Context<IInputs>) {
@@ -213,6 +214,52 @@ export default class CDSDataProvider implements ICDSDataProvider {
       xhr.send();
     });
   }
+
+  relaterow(entity: string, id: string, relationship: string, value: string): Promise<boolean> {
+    var xhr = new XMLHttpRequest();
+    var baseUrl = this.getBaseUrl();
+    var url = baseUrl + `/api/data/v9.2/${entity}s(${id})`;
+
+    xhr.open(
+      "POST",
+      url,
+      true
+    );
+
+    xhr.setRequestHeader("Accept", "pplication/json");
+    xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    xhr.setRequestHeader("OData-MaxVersion", "4.0");
+    xhr.setRequestHeader("OData-Version", "4.0");
+
+    
+
+    return new Promise(function (resolve, reject) {
+      let attr = {
+        "ewosa_incident_ewosa_systemicissue@odata.bind": `ewosa_systemicissues(${value})`
+      };
+      //xhr.send(JSON.stringify(attr));
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          // If successful         
+          resolve(true);
+        } else {
+          // If failed
+          reject({
+            status: xhr.status,
+            statusText: xhr.statusText,
+          });
+        }
+      };
+      
+      xhr.setRequestHeader("OData-MaxVersion", "4.0");
+      xhr.setRequestHeader("OData-Version", "4.0");
+      xhr.setRequestHeader("Accept", "application/json");
+      xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+      xhr.send(JSON.stringify(attr));
+    });
+  }
+
 
   getEntities(
     onlyActivities: string,

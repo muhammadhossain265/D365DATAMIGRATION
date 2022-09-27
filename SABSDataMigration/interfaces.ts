@@ -40,3 +40,11 @@ export interface IError {
   SABSID: string;
   Error: string;
 }
+
+export interface IEntity
+{
+  key: string;
+  text: string;
+  primaryentity: string;
+  relationship: string;  
+}

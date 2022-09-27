@@ -69,6 +69,8 @@ export default class Component extends React.Component<
     this.onChange = this.onChange.bind(this);
     this._onChanged = this._onChanged.bind(this);
     this.clearTable = this.clearTable.bind(this);
+    this._closeTable = this._closeTable.bind(this);
+    this._closecases = this._closecases.bind(this);
     this.test = this.test.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
@@ -174,6 +176,17 @@ export default class Component extends React.Component<
   private test() {
     var entityname: string = '';
     var data: any;
+
+
+    if (entityname != '') {
+      var id: string = '',
+        relationship: string = '',
+        value: string = '';
+
+      this._dataProvider.relaterow(entityname, id, relationship, value).then(result => {
+        console.log(result);
+      });
+    }
     if (entityname.length > 0 && data) {
       this._dataProvider.createRecord(entityname, data).then((response: any) => {
         console.log(response);
@@ -264,9 +277,77 @@ export default class Component extends React.Component<
     else alert('Bath number is missing');
   }
 
+  private _closeTable() {
+    let {
+      entity,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      noofitemsdeleted,
+      fields,
+    } = this.state;
+
+    var entityName = getAttributeValue('sabs_tablelogicalname');
+    var proceed = confirm('Do you want to continue with closing cases?');
+    if (proceed) {
+      var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+      if (noofitemssucceededpreviously)
+        this.setState({ noofitems: noofitemssucceededpreviously });
+      noofitemssucceeded = 0;
+      this.setState({ process: "Close", noofitemssucceeded });
+
+      this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    }
+  }
+
   private _exporterror() {
     let { faileditems } = this.state;
     exportExcelCS(faileditems, 'Errors.csv');
+  }
+
+  private _closecases(entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
+    let { noofitemsfailed, errors, faileditems } = this.state;
+    noofitemsdeleted = 0;
+    var numberinbatch = 40;
+    this._cds.getactivecases(numberinbatch).then((items) => {
+      this.setState({ noofitemstodelete: items.length });
+      items.map((item: any) => {
+        if (item.ewosa_closeddate) {
+          setTimeout(() => {
+            this._cds.closecase(item)
+              .then((result: IResponse) => {
+                if (result.errorCode) {
+                  noofitemsfailed++;
+                  var error = `SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`;
+                  errors.push(error);
+                  faileditems.push({ SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string })
+                  this.setState({ noofitemsfailed, errors, faileditems });
+                }
+                else {
+                  noofitemssucceeded++;
+                  noofitemsdeleted++;
+                  this.setState({ noofitemssucceeded, noofitemsdeleted });
+                  if (noofitems == noofitemssucceeded)
+                    this.resetAttributes();
+
+                  if (this.state.noofitemstodelete == noofitemsdeleted) {
+                    this._closecases(entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
+                    this._cds.getItems('incident', fields).then((items) => {
+                      console.log(items);
+                      if (items.length == 0)
+                        alert('All active cases with Closed Date are now closed.');
+                      else
+                        this.setState({ items });
+
+                    });
+                  }
+                }
+              });
+          }, 3000);
+        }
+      });
+    });
+    return { noofitemssucceeded, noofitemsdeleted };
   }
 
   private _validate() {
@@ -891,6 +972,8 @@ export default class Component extends React.Component<
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
+                  <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus />
+                  &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
               </tr>
