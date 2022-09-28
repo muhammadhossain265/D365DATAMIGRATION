@@ -260,6 +260,32 @@ export default class CDSDataProvider implements ICDSDataProvider {
     });
   }
 
+  createAssociatedRequest(decisionId: string, complianceReferralId: string) {
+    var baseUrl = this.getBaseUrl();
+    var associatedReferralDecision = {
+        "@odata.id": baseUrl + "/api/data/v9.1/new_decisions(" + decisionId + ")"
+    };
+
+    var req = new XMLHttpRequest();
+    req.open("POST", baseUrl + "/api/data/v9.1/new_compliancereferrals(" + complianceReferralId + ")/new_decisionslinkedtoreferrals/$ref", false);
+    req.setRequestHeader("Accept", "application/json");
+    req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    req.setRequestHeader("OData-MaxVersion", "4.0");
+    req.setRequestHeader("OData-Version", "4.0");
+    req.onreadystatechange = function () {
+        if (this.readyState == 4 /* complete */) {
+            req.onreadystatechange = null;
+            if (this.status == 204) {
+                var accountUri = this.getResponseHeader("OData-EntityId");
+            } else {
+                var error = JSON.parse(this.response).error;
+                alert(error.message);
+            }
+        }
+    };
+    req.send(JSON.stringify(associatedReferralDecision));
+}
+
 
   getEntities(
     onlyActivities: string,
