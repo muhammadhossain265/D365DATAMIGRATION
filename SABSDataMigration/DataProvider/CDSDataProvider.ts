@@ -429,9 +429,21 @@ export default class CDSDataProvider implements ICDSDataProvider {
     return Promise.resolve(result);
   }
 
-  async updateRecord(entity: string, id: string, data: any): Promise<string> {
-    const result = await this.context.webAPI.updateRecord(entity, id, data);
-    return result.id;
+  async updateRecord(entity: string, id: string, data: any): Promise<IResponse> {
+    var response: IResponse = {};
+    const result = await this.context.webAPI.updateRecord(entity, id, data).then(
+      function success(result) {
+        response.value = result.id;
+        return response;
+      },
+      function (error) {
+        response.errorCode = error.errorCode;
+        response.message = error.message;
+        return response;
+      }
+    );
+
+    return result;
   }
 
   async deleteRecord(entity: string, id: string): Promise<IResponse> {

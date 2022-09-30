@@ -76,6 +76,8 @@ export default class Component extends React.Component<
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
     this._validate = this._validate.bind(this);
     this._exporterror = this._exporterror.bind(this);
+    this._inactivate = this._inactivate.bind(this);
+    this._inactivateRecord = this._inactivateRecord.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
     this._cds = new CDS(props);
@@ -304,7 +306,7 @@ export default class Component extends React.Component<
         alert('Case closed successfully.');
       });
     }
-    else {      
+    else {
       console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
       alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
 
@@ -599,6 +601,69 @@ export default class Component extends React.Component<
           });
       }
     }
+  }
+
+  private _inactivate() {
+    let {
+      data,
+      fields,
+      choices,
+      lookups,
+      entityName,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      entities,
+      batch
+    } = this.state;
+
+
+    var entity = entities.find((item: IDropdownOption) => item.key == entityName);
+    if (entity) {
+      if (batch.length == 0) {
+        // @ts-ignore    
+        Xrm.Page.getAttribute('sabs_tabledisplayname').setValue(entity.text);
+        // @ts-ignore   
+        Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
+        batch = 'SABS ' + getLocalDateAndTimeString(new Date);
+        // @ts-ignore    
+        Xrm.Page.getAttribute('sabs_batch').setValue(batch);
+
+        // @ts-ignore
+        Xrm.Page._data._entity.save();
+
+        this.setState({ batch });
+
+        let columns = getGridColumns(fields);
+        this.setState({ process: "Deactivate", columns });
+        noofitemssucceeded = 0;
+        noofitemsfailed = 0;
+        if (data.length > 0 && fields.length > 0) {
+          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0);
+        }
+      }
+    }
+  }
+
+  private _inactivateRecord(data: any, entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, currentindex: number) {
+    let { errors, faileditems } = this.state;
+    var item = data[currentindex];
+    this._cds.deactivateitem(entityName, getPropertyValue(item, 'sabsid'))
+      .then((result: IResponse) => {
+        if (result.errorCode) {
+          var error = `SABSID: ${getPropertyValue(item, 'sabsid')} error: ${result.message}`;
+          errors.push(error);
+          faileditems.push({ SABSID: getPropertyValue(item, 'sabsid'), Error: result.message as string });
+          noofitemsfailed++;
+          this.setState({ noofitemsfailed, errors, faileditems });
+        }
+        else {
+          noofitemssucceeded++;
+          this.setState({ noofitemssucceeded });
+          setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
+          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, currentindex + 1);
+        }
+      });
   }
 
   private removeField(field: IField) {
@@ -984,6 +1049,8 @@ export default class Component extends React.Component<
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
                   <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus />
+                  &nbsp;&nbsp;
+                  <PrimaryButton text="Inactivate" onClick={this._inactivate} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>

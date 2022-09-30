@@ -25,7 +25,7 @@ export default class CDS implements ICDS {
     var incidentresolution = {
       "subject": 'Closed as part of Data Migation',
       "incidentid@odata.bind": `/incidents(${incident.incidentid})`,
-      "timespent": incident.ewosa_timespent? incident.ewosa_timespent: 0,
+      "timespent": incident.ewosa_timespent ? incident.ewosa_timespent : 0,
       "description": 'Closed as part of Data Migaration'
     };
 
@@ -64,15 +64,36 @@ export default class CDS implements ICDS {
     return this._dataProvider.retrieveMultipleRecords('incident', filter);
   }
 
-
   getItems(entity: string, fields: IField[], filter?: string): Promise<any> {
     return this._dataProvider
       .retrieveMultipleRecords(entity, filter)
       .then((result) => {
         return result.map((activity: any) => {
           return parseObj(activity, fields);
-
         });
       });
-  }  
+  }
+
+  deactivateitem(entity: string, sabsid: string,): Promise<any> {
+    return this.getitembysabsid(entity, sabsid).then(result => {
+      if (result) {
+        var id = result[`${entity}id`];
+        if (id) {
+          return this._dataProvider.updateRecord(entity, id, {statecode: 1});
+        }
+        else {
+          alert(`Could not find primary key for SABSID ${sabsid}`);
+          return null;
+        }
+      }
+    })
+  }
+
+  getitembysabsid(entity: string, sabsid: string): Promise<any> {
+    return this._dataProvider.retrieveMultipleRecords(entity, `?$filter=sabs_sabsid eq '${sabsid}' and statecode eq 0`).then(result => {
+      if (result.length > 0)
+        return result[0];
+      return null;
+    })
+  }
 }
