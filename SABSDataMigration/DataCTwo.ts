@@ -49,6 +49,10 @@ export const entities: IDropdownOption[] =
         key: "ewosa_language",
         text: "Language (EWOSA)"
     }, {
+        key: "sabs_manytomany",
+        text: "Many to Many"
+    },
+    {
         key: "ewosa_member",
         text: "Member"
     }, {
