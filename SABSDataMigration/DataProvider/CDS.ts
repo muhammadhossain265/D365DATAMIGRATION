@@ -74,12 +74,16 @@ export default class CDS implements ICDS {
       });
   }
 
-  deactivateitem(entity: string, sabsid: string,): Promise<any> {
+  deactivateitem(entity: string, sabsid: string, deactivate?: boolean): Promise<any> {
     return this.getitembysabsid(entity, sabsid).then(result => {
+      var statecode = 1;
+      if (deactivate)
+      statecode = 0;
+
       if (result) {
         var id = result[`${entity}id`];
         if (id) {
-          return this._dataProvider.updateRecord(entity, id, {statecode: 1});
+          return this._dataProvider.updateRecord(entity, id, {statecode: statecode});
         }
         else {
           alert(`Could not find primary key for SABSID ${sabsid}`);

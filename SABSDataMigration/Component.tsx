@@ -289,28 +289,28 @@ export default class Component extends React.Component<
       fields,
     } = this.state;
 
-    // var proceed = confirm('Do you want to continue with closing cases?');
-    // if (proceed) {
-    //   var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
-    //   if (noofitemssucceededpreviously)
-    //     this.setState({ noofitems: noofitemssucceededpreviously });
-    //   noofitemssucceeded = 0;
-    //   this.setState({ process: "Close", noofitemssucceeded });
+    var proceed = confirm('Do you want to continue with closing cases?');
+    if (proceed) {
+      var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+      if (noofitemssucceededpreviously)
+        this.setState({ noofitems: noofitemssucceededpreviously });
+      noofitemssucceeded = 0;
+      this.setState({ process: "Close", noofitemssucceeded });
 
-    //   this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+      this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    }
+
+    // var casetoclose = localStorage.getItem('CASE');
+    // if (casetoclose) {
+    //   this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
+    //     alert('Case closed successfully.');
+    //   });
     // }
+    // else {
+    //   console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
+    //   alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
 
-    var casetoclose = localStorage.getItem('CASE');
-    if (casetoclose) {
-      this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
-        alert('Case closed successfully.');
-      });
-    }
-    else {
-      console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-      alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-
-    }
+    // }
   }
 
   private _exporterror() {
@@ -603,7 +603,7 @@ export default class Component extends React.Component<
     }
   }
 
-  private _inactivate() {
+  private _inactivate(deactivate?: boolean) {
     let {
       data,
       fields,
@@ -639,16 +639,16 @@ export default class Component extends React.Component<
         noofitemssucceeded = 0;
         noofitemsfailed = 0;
         if (data.length > 0 && fields.length > 0) {
-          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0);
+          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, 0, deactivate);
         }
       }
     }
   }
 
-  private _inactivateRecord(data: any, entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, currentindex: number) {
+  private _inactivateRecord(data: any, entityName: string, noofitemssucceeded: number, noofitems: number, noofitemsfailed: number, currentindex: number, deactivate?: boolean) {
     let { errors, faileditems } = this.state;
     var item = data[currentindex];
-    this._cds.deactivateitem(entityName, getPropertyValue(item, 'sabsid'))
+    this._cds.deactivateitem(entityName, getPropertyValue(item, 'sabsid'), deactivate)
       .then((result: IResponse) => {
         if (result.errorCode) {
           var error = `SABSID: ${getPropertyValue(item, 'sabsid')} error: ${result.message}`;
@@ -661,7 +661,7 @@ export default class Component extends React.Component<
           noofitemssucceeded++;
           this.setState({ noofitemssucceeded });
           setAttributeValue('sabs_totalnumberofitemssucceeded', noofitemssucceeded);
-          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, currentindex + 1);
+          this._inactivateRecord(data, entityName, noofitemssucceeded, noofitems, noofitemsfailed, currentindex + 1, deactivate);
         }
       });
   }
@@ -1050,7 +1050,9 @@ export default class Component extends React.Component<
                   } &nbsp;&nbsp;
                   <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus />
                   &nbsp;&nbsp;
-                  <PrimaryButton text="Inactivate" onClick={this._inactivate} allowDisabledFocus />
+                  <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
+                  &nbsp;&nbsp;
+                  <PrimaryButton text="Deactivate" onClick={()=> this._inactivate(true)} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
