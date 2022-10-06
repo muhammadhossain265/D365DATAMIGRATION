@@ -58,7 +58,7 @@ export default class CDS implements ICDS {
   }
 
   getactivecases(top?: number): Promise<any> {
-    var filter = '?$filter=statecode eq 0';
+    var filter = '?$filter=statecode eq 0 and ewosa_closeddate ne null';
     if (top)
       filter += `&$top=${top}`;
     return this._dataProvider.retrieveMultipleRecords('incident', filter);
