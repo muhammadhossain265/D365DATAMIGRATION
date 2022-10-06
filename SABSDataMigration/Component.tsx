@@ -324,7 +324,11 @@ export default class Component extends React.Component<
     var numberinbatch = 40;
     this._cds.getactivecases(numberinbatch).then((items) => {
       this.setState({ noofitemstodelete: items.length });
+      console.log('following cases got retrieved.');
+      console.log(items);
       items.map((item: any) => {
+        console.log('Case about to close is');
+        console.log(item);
         if (item.ewosa_closeddate) {
           setTimeout(() => {
             this._cds.closecase(item)
