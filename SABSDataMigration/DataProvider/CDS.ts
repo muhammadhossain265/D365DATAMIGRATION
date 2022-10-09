@@ -20,6 +20,10 @@ export default class CDS implements ICDS {
   private _dataProvider: ICDSDataProvider;
   private context: ComponentFramework.Context<IInputs>;
 
+  reactivatecase(caseid: string): Promise<any> {
+    return this._dataProvider.updateRecord('incident', caseid, {statecode: 0, statuscode: 1});
+  }
+
   closecase(incident: any): Promise<any> {
 
     var incidentresolution = {

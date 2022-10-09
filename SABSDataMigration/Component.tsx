@@ -78,6 +78,7 @@ export default class Component extends React.Component<
     this._exporterror = this._exporterror.bind(this);
     this._inactivate = this._inactivate.bind(this);
     this._inactivateRecord = this._inactivateRecord.bind(this);
+    this._reactivateCases = this._reactivateCases.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
     this._cds = new CDS(props);
@@ -279,6 +280,89 @@ export default class Component extends React.Component<
     else alert('Bath number is missing');
   }
 
+  private _reactivateCases() {
+    let {
+      entity,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      noofitemsdeleted,
+      fields,
+    } = this.state;
+
+    // var proceed = confirm('Do you want to continue with closing cases?');
+    // if (proceed) {
+    //   var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+    //   if (noofitemssucceededpreviously)
+    //     this.setState({ noofitems: noofitemssucceededpreviously });
+    //   noofitemssucceeded = 0;
+    //   this.setState({ process: "Close", noofitemssucceeded });
+
+    //   this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    // }
+
+    var casetoreactivate = localStorage.getItem('CASE');
+    if (casetoreactivate) {
+      this._cds.reactivatecase(casetoreactivate).then(result => {
+        alert('Case reactivated successfully.');
+      });
+    }
+    else {
+      console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
+      alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
+
+    }
+  }
+
+  private _reactivatecases(entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
+    let { noofitemsfailed, errors, faileditems } = this.state;
+    noofitemsdeleted = 0;
+    var numberinbatch = 40;
+    this._cds.getactivecases(numberinbatch).then((items) => {
+      this.setState({ noofitemstodelete: items.length });
+      console.log('following cases got retrieved.');
+      console.log(items);
+      items.map((item: any) => {
+        console.log('Case about to close is');
+        console.log(item);
+        if (item.ewosa_closeddate) {
+          setTimeout(() => {
+            this._cds.closecase(item)
+              .then((result: IResponse) => {
+                if (result.errorCode) {
+                  noofitemsfailed++;
+                  var error = `SABSID: ${getPropertyValue(item, 'sabs_sabsid')} error: ${result.message}`;
+                  errors.push(error);
+                  faileditems.push({ SABSID: getPropertyValue(item, 'sabs_sabsid'), Error: result.message as string })
+                  this.setState({ noofitemsfailed, errors, faileditems });
+                }
+                else {
+                  noofitemssucceeded++;
+                  noofitemsdeleted++;
+                  this.setState({ noofitemssucceeded, noofitemsdeleted });
+                  if (noofitems == noofitemssucceeded)
+                    this.resetAttributes();
+
+                  if (this.state.noofitemstodelete == noofitemsdeleted) {
+                    this._closecases(entity, noofitemssucceeded, noofitemsdeleted, fields, noofitems);
+                    this._cds.getItems('incident', fields).then((items) => {
+                      console.log(items);
+                      if (items.length == 0)
+                        alert('All active cases with Closed Date are now closed.');
+                      else
+                        this.setState({ items });
+
+                    });
+                  }
+                }
+              });
+          }, 3000);
+        }
+      });
+    });
+    return { noofitemssucceeded, noofitemsdeleted };
+  }
+
   private _closeTable() {
     let {
       entity,
@@ -289,28 +373,28 @@ export default class Component extends React.Component<
       fields,
     } = this.state;
 
-    var proceed = confirm('Do you want to continue with closing cases?');
-    if (proceed) {
-      var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
-      if (noofitemssucceededpreviously)
-        this.setState({ noofitems: noofitemssucceededpreviously });
-      noofitemssucceeded = 0;
-      this.setState({ process: "Close", noofitemssucceeded });
+    // var proceed = confirm('Do you want to continue with closing cases?');
+    // if (proceed) {
+    //   var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+    //   if (noofitemssucceededpreviously)
+    //     this.setState({ noofitems: noofitemssucceededpreviously });
+    //   noofitemssucceeded = 0;
+    //   this.setState({ process: "Close", noofitemssucceeded });
 
-      this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    //   this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    // }
+
+    var casetoclose = localStorage.getItem('CASE');
+    if (casetoclose) {
+      this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
+        alert('Case closed successfully.');
+      });
     }
+    else {
+      console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
+      alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
 
-    // var casetoclose = localStorage.getItem('CASE');
-    // if (casetoclose) {
-    //   this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
-    //     alert('Case closed successfully.');
-    //   });
-    // }
-    // else {
-    //   console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-    //   alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-
-    // }
+    }
   }
 
   private _exporterror() {
@@ -1054,9 +1138,11 @@ export default class Component extends React.Component<
                   } &nbsp;&nbsp;
                   <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus />
                   &nbsp;&nbsp;
+                  <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
+                  &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
                   &nbsp;&nbsp;
-                  <PrimaryButton text="Deactivate" onClick={()=> this._inactivate(true)} allowDisabledFocus />
+                  <PrimaryButton text="Reactivate" onClick={()=> this._inactivate(true)} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
