@@ -8,8 +8,10 @@ export const clients: client[] =
     }, {
         url: "https://ewosa01.crm6.dynamics.com",
         exmpiry: new Date(2022, 10, 11)
+    },{
+        url: "https://casemanagement.crm6.dynamics.com",
+        exmpiry: new Date(2022, 10, 11)
     }
-    
     ];
 
 interface client {
