@@ -373,28 +373,28 @@ export default class Component extends React.Component<
       fields,
     } = this.state;
 
-    // var proceed = confirm('Do you want to continue with closing cases?');
-    // if (proceed) {
-    //   var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
-    //   if (noofitemssucceededpreviously)
-    //     this.setState({ noofitems: noofitemssucceededpreviously });
-    //   noofitemssucceeded = 0;
-    //   this.setState({ process: "Close", noofitemssucceeded });
+    var proceed = confirm('Do you want to continue with closing cases?');
+    if (proceed) {
+      var noofitemssucceededpreviously = getAttributeValue('sabs_totalnumberofitemssucceeded');
+      if (noofitemssucceededpreviously)
+        this.setState({ noofitems: noofitemssucceededpreviously });
+      noofitemssucceeded = 0;
+      this.setState({ process: "Close", noofitemssucceeded });
 
-    //   this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+      this._closecases('incident', noofitemssucceeded, noofitemsdeleted, fields, noofitemssucceededpreviously);
+    }
+
+    // var casetoclose = localStorage.getItem('CASE');
+    // if (casetoclose) {
+    //   this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
+    //     alert('Case closed successfully.');
+    //   });
     // }
+    // else {
+    //   console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
+    //   alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
 
-    var casetoclose = localStorage.getItem('CASE');
-    if (casetoclose) {
-      this._cds.closecase({ incidentid: casetoclose, ewosa_timespent: 0 }).then(result => {
-        alert('Case closed successfully.');
-      });
-    }
-    else {
-      console.log(`localStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-      alert(`You are missing the following\nlocalStorage.setItem('CASE', 'e0133293-c33a-ed11-9db0-000d3a8d60ad')`);
-
-    }
+    // }
   }
 
   private _exporterror() {
