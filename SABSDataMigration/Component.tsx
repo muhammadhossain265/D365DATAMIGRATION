@@ -70,6 +70,7 @@ export default class Component extends React.Component<
     this._onChanged = this._onChanged.bind(this);
     this.clearTable = this.clearTable.bind(this);
     this._closeTable = this._closeTable.bind(this);
+    this._clearQueue = this._clearQueue.bind(this);
     this._closecases = this._closecases.bind(this);
     this.test = this.test.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
@@ -79,6 +80,7 @@ export default class Component extends React.Component<
     this._inactivate = this._inactivate.bind(this);
     this._inactivateRecord = this._inactivateRecord.bind(this);
     this._reactivateCases = this._reactivateCases.bind(this);
+    this._deletequeitem = this._deletequeitem.bind(this);
 
     this._dataProvider = new CDSDataProvider(props);
     this._cds = new CDS(props);
@@ -208,6 +210,66 @@ export default class Component extends React.Component<
         console.log(response);
       });
     }
+  }
+
+  private _clearQueue() {
+    let {
+      entity,
+      noofitems,
+      noofitemssucceeded,
+      noofitemsfailed,
+      noofitemsdeleted,
+      fields,
+    } = this.state;
+
+    //localStorage.setItem('QUEUESETTING', JSON.stringify({'queuename': 'Admin Tasks', 'caseids': 'abcd123,abcd354'}))
+
+    var queuesetting = localStorage.getItem('QUEUESETTING');
+    if (!queuesetting)
+      alert('QUEUESETTING does not exist');
+    else {
+      var settingobj = JSON.parse(queuesetting);
+      var excludedcases = settingobj.caseids.split(',');
+      console.log(settingobj);
+      this._dataProvider.retrieveMultipleRecords('queue', `?$filter=name eq '${settingobj.queuename}'`).then(result => {
+        console.log(result);
+        if (result && result.length > 0)
+          this._dataProvider.retrieveMultipleRecords('queueitem', `?$filter=_queueid_value eq ${result[0].queueid}`).then(result => {
+            console.log(result);
+            if (result && result.length > 0) {
+              var idx = 0;
+              this._deletequeitem(result, idx, excludedcases);
+            }
+          });
+      });
+    }
+  }
+
+  private _deletequeitem(result: any, idx: number, excludedcases: any) {
+    let { noofitemssucceeded } = this.state;
+    var record = result[idx];
+    this._dataProvider.retrieveRecord('incident', record._objectid_value).then(item => {
+      if (item) {
+        if (excludedcases.indexOf(item.ticketnumber) < 0) {
+          console.log(item);
+          this._dataProvider.deleteRecord('queueitem', record.queueitemid).then((deleted: any) => {
+            noofitemssucceeded++;
+            this.setState({ noofitemssucceeded });
+            if (idx < result.length) {
+              idx++;
+              this._deletequeitem(result, idx, excludedcases);
+            }
+          });
+        }
+        else {
+          console.log(item);
+          if (idx < result.length) {
+            idx++;
+            this._deletequeitem(result, idx, excludedcases);
+          }
+        }
+      }
+    })
   }
 
   private clearTable() {
@@ -1136,13 +1198,14 @@ export default class Component extends React.Component<
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
-                  <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus />
+                  {/* <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus /> */}
+                  <PrimaryButton text="Clear Queue" onClick={this._clearQueue} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
                   &nbsp;&nbsp;
-                  <PrimaryButton text="Reactivate" onClick={()=> this._inactivate(true)} allowDisabledFocus />
+                  <PrimaryButton text="Reactivate" onClick={() => this._inactivate(true)} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
