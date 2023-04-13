@@ -11,7 +11,12 @@ export const clients: client[] =
     },{
         url: "https://casemanagement.crm6.dynamics.com",
         exmpiry: new Date(2022, 10, 11)
-    }
+    },{
+        url: "https://org28a26b9f.crm6.dynamics.com",
+        exmpiry: new Date(2023, 10, 11)
+    },{
+        url: "https://uatcpm.crm6.dynamics.com",
+        exmpiry: new Date(2023, 10, 11)
     ];
 
 interface client {

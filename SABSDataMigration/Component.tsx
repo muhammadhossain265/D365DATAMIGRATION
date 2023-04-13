@@ -36,10 +36,12 @@ import {
 } from "@fluentui/react";
 import ICDS from "./DataProvider/ICDSD";
 import CDS from "./DataProvider/CDS";
-import { entities } from "./DataCTwo";
+//import { entities } from "./DataCTwo";
 import { text } from "stream/consumers";
 import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
+
+const entities = require("./clients/mfis.json");
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
