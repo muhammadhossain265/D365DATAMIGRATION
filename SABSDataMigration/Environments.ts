@@ -17,6 +17,9 @@ export const clients: client[] =
     }, {
         url: "https://therapy.crm6.dynamics.com",
         exmpiry: new Date(2024, 12, 12)
+    }, {
+        url: "https://uathorizon.crm6.dynamics.com",
+        exmpiry: new Date(2024, 12, 12)
     }
     ];
 
