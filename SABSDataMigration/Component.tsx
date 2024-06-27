@@ -41,7 +41,7 @@ import { text } from "stream/consumers";
 import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
 
-const entities = require("./clients/mfis.json");
+const entities = require("./clients/horizon.json");
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
