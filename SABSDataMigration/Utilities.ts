@@ -157,7 +157,7 @@ export function getPicklistItemValue(
 ): string {
   let choice = choices.find((choice) => choice.key == pickList);
   if (choice) {
-    var choiceItem = choice.value.find((item) => item.TypeText.toLowerCase() == choiceText.toLowerCase());
+    var choiceItem = choice.value.find((item) => item.TypeText.toLowerCase() == choiceText.toString().toLowerCase());
     if (choiceItem) return choiceItem.TypeCode;
     else
       alert(`Choice Item ${choiceText} does not exist in Choice ${pickList}`);
