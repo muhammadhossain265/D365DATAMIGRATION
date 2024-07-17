@@ -7,8 +7,10 @@ import { IInputs } from "./generated/ManifestTypes";
 import Select from "react-select";
 import {
   addPropertyToOobject,
+  enclosedInQuote,
   getAttributeValue,
   getBooleanFieldKey,
+  getCleanString,
   getGridColumns,
   getLocalDateAndTimeString,
   getLookupFieldValue,
@@ -667,56 +669,59 @@ export default class Component extends React.Component<
           field.name != "" &&
           field.csvfield &&
           field.csvfield != "")
-          if (item[field.csvfield])
+          if (item[field.csvfield]) {
             var value = item[field.csvfield];
-        var fieldName = field.name;
-        if (value) {
-          switch (field.AttributeType) {
-            case AttributeType.Virtual.toString():
-              value = getVirtualItemValue(choices, fieldName, value);
-              break;
-            case AttributeType.Picklist.toString():
-              value = getPicklistItemValue(choices, fieldName, value);
-              break;
-            case AttributeType.Lookup.toString():
-            case AttributeType.Owner.toString():
-              if (field.AttributeType == AttributeType.Owner.toString())
-                field.targets = ['systemuser'];
-              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
-              var schema = field.schemaname;
-              if (field.targets && field.targets.length > 1 && value && value.length > 0) {
-                var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
-                if (schma && schma.length > 0)
-                  schema += `_${schma}`;
+            if (value) {
+              if (enclosedInQuote(value))
+                value = getCleanString(value);
+              var fieldName = field.name;
+              switch (field.AttributeType) {
+                case AttributeType.Virtual.toString():
+                  value = getVirtualItemValue(choices, fieldName, value);
+                  break;
+                case AttributeType.Picklist.toString():
+                  value = getPicklistItemValue(choices, fieldName, value);
+                  break;
+                case AttributeType.Lookup.toString():
+                case AttributeType.Owner.toString():
+                  if (field.AttributeType == AttributeType.Owner.toString())
+                    field.targets = ['systemuser'];
+                  value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+                  var schema = field.schemaname;
+                  if (field.targets && field.targets.length > 1 && value && value.length > 0) {
+                    var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
+                    if (schma && schma.length > 0)
+                      schema += `_${schma}`;
+                  }
+                  if (schema == "ParentCaseId")
+                    schema = 'parentcaseid';
+                  fieldName = `${schema}@odata.bind`;
+                  if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
+                    fieldName = `${field.schemaname}@odata.bind`;
+                  break;
+                case AttributeType.Customer.toString():
+                  value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+                  if (value.indexOf('contacts') > 0)
+                    fieldName += "_contact@odata.bind";
+                  else
+                    fieldName += "_account@odata.bind";
+                  break;
+                case AttributeType.String.toString():
+                  value = value.toString();
+                  break;
+                case AttributeType.Boolean.toString():
+                  value = getBooleanFieldKey(value.toString());
+                  break;
+                case AttributeType.DateTime.toString():
+                  var dateonlyfields = ['Due Date', 'Date Completed'];
+                  if (!dateonlyfields.find(fld => fld == field.label))
+                    value = new Date(value);
+                  break;
               }
-              if (schema == "ParentCaseId")
-                schema = 'parentcaseid';
-              fieldName = `${schema}@odata.bind`;
-              if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
-                fieldName = `${field.schemaname}@odata.bind`;
-              break;
-            case AttributeType.Customer.toString():
-              value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
-              if (value.indexOf('contacts') > 0)
-                fieldName += "_contact@odata.bind";
-              else
-                fieldName += "_account@odata.bind";
-              break;
-            case AttributeType.String.toString():
-              value = value.toString();
-              break;
-            case AttributeType.Boolean.toString():
-              value = getBooleanFieldKey(value.toString());
-              break;
-            case AttributeType.DateTime.toString():
-              var dateonlyfields = ['Due Date', 'Date Completed'];
-              if (!dateonlyfields.find(fld => fld == field.label))
-                value = new Date(value);
-              break;
-          }
 
-          addPropertyToOobject(inputData, fieldName, value);
-        }
+              addPropertyToOobject(inputData, fieldName, value);
+            }
+          }
       });
       if (Object.keys(inputData).length > 0) {
 

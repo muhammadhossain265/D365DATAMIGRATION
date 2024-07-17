@@ -341,6 +341,14 @@ export function isValidClient() {
   return false;
 }
 
+export function enclosedInQuote(str: string): boolean {
+  return str[0] == "'" && str[str.length - 1] == "'"  
+}
+
+export function getCleanString(str: string): string {
+  return str.replace(/["']/g, "");
+}
+
 // new Date().toLocaleTimeString()
 // for (let i = 0; i < 500; i++) {
 //   task(i);
