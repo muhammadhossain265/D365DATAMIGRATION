@@ -1273,6 +1273,7 @@ export default class Component extends React.Component<
             // checkButtonAriaLabel="select row"
             // onRenderDetailsFooter={this._onRenderDetailsFooter}
             />
+            App Last update: 17/07/2024
           </div>
         }
       </>
