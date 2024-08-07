@@ -2,5 +2,17 @@
     {
         "key": "account",
         "text": "Account"
+    },
+    {
+        "key": "msdyn_workorder",
+        "text": "Work Order"
+    },
+    {
+        "key": "bookableresourcebooking",
+        "text": "Appointment"        
+    },
+    {
+        "key": "msdyn_workordertype",
+        "text": "Work Order Type"        
     }
 ]
