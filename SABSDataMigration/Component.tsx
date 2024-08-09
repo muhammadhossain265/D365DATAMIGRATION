@@ -42,8 +42,10 @@ import CDS from "./DataProvider/CDS";
 import { text } from "stream/consumers";
 import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
+import { table } from "console";
 
 const entities = require("./clients/horizon.json");
+const schemamappings = require("./clients/horizon/filedexceptions.json");
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -517,6 +519,12 @@ export default class Component extends React.Component<
     return { noofitemssucceeded, noofitemsdeleted };
   }
 
+  private getschema = (table: string, field: string): string => {
+    var fieldObj = schemamappings.find((fld: any) => fld.entity == table && fld.fieldname == field);
+    if (fieldObj)
+      return fieldObj.schema;
+    return ''
+  }
   private _validate() {
     let {
       data,
@@ -622,6 +630,9 @@ export default class Component extends React.Component<
               if (!value || value.length == 0)
                 validationfailed += 1;
               var schema = field.schemaname;
+              var newSchema = this.getschema(entityName, fieldName);
+              if (newSchema !== '')
+                schema = newSchema;
               if (field.targets && field.targets.length > 1 && value && value.length > 0) {
                 var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
                 if (schma && schma.length > 0)
@@ -687,7 +698,12 @@ export default class Component extends React.Component<
                   if (field.AttributeType == AttributeType.Owner.toString())
                     field.targets = ['systemuser'];
                   value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
+                  // we need to look at this .. Very important
                   var schema = field.schemaname;
+                  var newSchema = this.getschema(entityName, fieldName);
+                  if (newSchema !== '')
+                    schema = newSchema;
+                  //var schema = field.name;
                   if (field.targets && field.targets.length > 1 && value && value.length > 0) {
                     var schma = field.targets.find(target => value.indexOf(target) > 0) as string;
                     if (schma && schma.length > 0)
@@ -970,6 +986,8 @@ export default class Component extends React.Component<
     var value: ILookupEntity[] = [];
     items.map((item: any) => {
       var lookupitm = { sabs_sabsid: item.sabs_sabsid, _primaryIdAttribute: item[entity.PrimaryIdAttribute] };
+      if (!item.sabs_sabsid)
+        lookupitm.sabs_sabsid = item[entity.PrimaryIdAttribute];
       if (entityname == 'systemuser' && item['domainname'])
         addPropertyToOobject(lookupitm, 'domainname', item['domainname']);
       value.push(lookupitm);

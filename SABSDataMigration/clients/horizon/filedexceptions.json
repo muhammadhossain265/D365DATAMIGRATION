@@ -1,0 +1,17 @@
+[
+    {
+        "entity": "bookableresourcebooking",
+        "fieldname": "msdyn_workorder",
+        "schema": "msdyn_workorder"
+    },
+    {
+        "entity": "msdyn_workorder",
+        "fieldname": "msdyn_workordertype",
+        "schema": "msdyn_workordertype"
+    },
+    {
+        "entity": "msdyn_workorder",
+        "fieldname": "msdyn_serviceaccount",
+        "schema": "msdyn_serviceaccount"
+    }
+]

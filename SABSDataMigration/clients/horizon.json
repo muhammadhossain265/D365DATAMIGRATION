@@ -6,6 +6,10 @@
     {
         "key": "msdyn_workorder",
         "text": "Work Order"
+    },    
+    {
+        "key": "bookingstatus",
+        "text": "Booking Status"        
     },
     {
         "key": "bookableresourcebooking",
