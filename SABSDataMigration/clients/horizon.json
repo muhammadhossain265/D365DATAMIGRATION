@@ -4,17 +4,25 @@
         "text": "Account"
     },
     {
-        "key": "msdyn_workorder",
-        "text": "Work Order"
-    },    
+        "key": "bookableresourcebooking",
+        "text": "Appointment"        
+    },      
+    {
+        "key": "sabs_appointmenttype",
+        "text": "Appointment Type"        
+    },      
+    {
+        "key": "bookableresource",
+        "text": "Bookable Rsource"        
+    },  
     {
         "key": "bookingstatus",
         "text": "Booking Status"        
     },
     {
-        "key": "bookableresourcebooking",
-        "text": "Appointment"        
-    },
+        "key": "msdyn_workorder",
+        "text": "Work Order"
+    },  
     {
         "key": "msdyn_workordertype",
         "text": "Work Order Type"        
