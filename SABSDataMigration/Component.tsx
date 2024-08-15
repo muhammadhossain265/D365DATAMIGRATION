@@ -1188,31 +1188,7 @@ export default class Component extends React.Component<
             </table>
             <table>
               <tr>
-                <td>
-                  <Dropdown
-                    label="Table"
-                    defaultSelectedKey="broccoli"
-                    options={entities}
-                    disabled={false}
-                    styles={dropdownStyles}
-                    onChanged={this._onChanged}
-                  />
-                  {/* <input
-                onChange={(value) => this.onTextChange(value, "entityName")}
-              /> */}
-                </td>
-                <td>&nbsp;&nbsp;&nbsp;</td>
-                <td>
-                  <CSVReader
-                    cssClass="react-csv-input"
-                    // label="Choose file"
-                    onFileLoaded={this.handleForce}
-                    parserOptions={this.papaparseOptions}
-                  />
-                </td>
-                <td>&nbsp;&nbsp;</td>
-                <td>
-                  <br />
+              <td>                  
                   {batch.length == 0 && !validated && <PrimaryButton text="Validate" onClick={this._validate} allowDisabledFocus />}
                   &nbsp;&nbsp;
                   {batch.length == 0 && validated && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
@@ -1220,6 +1196,8 @@ export default class Component extends React.Component<
                   {batch.length > 0 &&
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
                   } &nbsp;&nbsp;
+                  </td>
+                  <td>
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
@@ -1234,6 +1212,33 @@ export default class Component extends React.Component<
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
+              </tr>
+              <tr>     
+                <td>           
+                  <Dropdown
+                    label="Table"
+                    defaultSelectedKey="broccoli"
+                    options={entities}
+                    disabled={false}
+                    styles={dropdownStyles}
+                    onChanged={this._onChanged}
+                  />
+                  {/* <input
+                onChange={(value) => this.onTextChange(value, "entityName")}
+              /> */}
+                
+                &nbsp;&nbsp;
+                </td>
+                <td>
+                  <CSVReader
+                    cssClass="react-csv-input"
+                    // label="Choose file"
+                    onFileLoaded={this.handleForce}
+                    parserOptions={this.papaparseOptions}
+                  />
+                
+                </td>
+                
               </tr>
             </table>
             <br />

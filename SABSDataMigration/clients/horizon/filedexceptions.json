@@ -11,6 +11,11 @@
     },
     {
         "entity": "msdyn_workorder",
+        "fieldname": "msdyn_pricelist",
+        "schema": "msdyn_pricelist"
+    },
+    {
+        "entity": "msdyn_workorder",
         "fieldname": "msdyn_serviceaccount",
         "schema": "msdyn_serviceaccount"
     }
