@@ -18,6 +18,10 @@
     {
         "key": "bookingstatus",
         "text": "Booking Status"        
+    },  
+    {
+        "key": "connection",
+        "text": "Connection"        
     },
     {
         "key": "msdyn_workorder",

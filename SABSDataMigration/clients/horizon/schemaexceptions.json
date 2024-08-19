@@ -1,0 +1,12 @@
+[    
+    {
+        "entity": "connection",
+        "fieldname": "record1id",
+        "name": "account"
+    },
+    {
+        "entity": "connection",
+        "fieldname": "record2id",
+        "name": "account"
+    }
+]

@@ -45,6 +45,7 @@ import { exportExcelCS } from "./xlsxutilities";
 import { table } from "console";
 
 const entities = require("./clients/horizon.json");
+const schemas = require("./clients/horizon/schemaexceptions.json");
 const schemamappings = require("./clients/horizon/filedexceptions.json");
 
 export default class Component extends React.Component<
@@ -858,7 +859,7 @@ export default class Component extends React.Component<
       csvFields.map((field) => {
         var cdsField = cdsFields.find(
           (cdsFld) =>
-            cdsFld.label && cdsFld.label.replace('/', ' ').replace(':', ' ').replace('-', ' ').replace('?', ' ').toLowerCase().split(' ').join('_') == field.label
+            cdsFld.label && cdsFld.label.replace(')', '_').replace('(', '_').replace('/', ' ').replace(':', ' ').replace('-', ' ').replace('?', ' ').toLowerCase().split(' ').join('_') == field.label
         );
         if (cdsField) {
           var newfield: IField = {
@@ -1087,12 +1088,13 @@ export default class Component extends React.Component<
         var cdsFields: ISelectionOption[] = [];
         console.log(attributes);
         attributes.map((attribute) => {
+          var schema = schemas.find((sch: any) => sch.entity == entity._entityType && sch.fieldname == attribute.LogicalName);
           cdsFields.push({
             value: attribute.LogicalName,
             label: attribute.Label,
             AttributeType: attribute.AttributeType,
             SchemaName: attribute.SchemaName,
-            Targets: attribute.Targets,
+            Targets: schema? [schema.name]: attribute.Targets,
           });
         });
 
@@ -1196,14 +1198,14 @@ export default class Component extends React.Component<
                   {batch.length > 0 &&
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
                   } &nbsp;&nbsp;
-                  </td>
-                  <td>
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
                   {/* <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus /> */}
                   <PrimaryButton text="Clear Queue" onClick={this._clearQueue} allowDisabledFocus />
-                  &nbsp;&nbsp;
+                  &nbsp;&nbsp;                  
+                  </td>
+                  <td>
                   <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />

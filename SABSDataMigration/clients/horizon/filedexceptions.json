@@ -18,5 +18,20 @@
         "entity": "msdyn_workorder",
         "fieldname": "msdyn_serviceaccount",
         "schema": "msdyn_serviceaccount"
+    },
+    {
+        "entity": "connection",
+        "fieldname": "record1id",
+        "schema": "record1id_account"
+    },
+    {
+        "entity": "connection",
+        "fieldname": "record2id",
+        "schema": "record2id_account"
+    },
+    {
+        "entity": "connection",
+        "fieldname": "record2roleid",
+        "schema": "record2roleid"
     }
 ]
