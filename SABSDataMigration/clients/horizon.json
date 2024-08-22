@@ -22,6 +22,10 @@
     {
         "key": "connection",
         "text": "Connection"        
+    }, 
+    {
+        "key": "connectionrole",
+        "text": "Connection Role"        
     },
     {
         "key": "msdyn_workorder",
