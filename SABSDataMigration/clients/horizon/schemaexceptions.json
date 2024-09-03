@@ -8,5 +8,11 @@
         "entity": "connection",
         "fieldname": "record2id",
         "name": "account"
+    },
+    {
+        "entity": "annotation",
+        "fieldname": "objectid",
+        "fieldfullyqualifiedname": "objectid_account",
+        "name": "account"
     }
 ]

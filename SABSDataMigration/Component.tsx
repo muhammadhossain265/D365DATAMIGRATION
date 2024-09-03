@@ -181,8 +181,8 @@ export default class Component extends React.Component<
 
   private resetAttributes() {
     setAttributeValue('sabs_totalnumberofitemssucceeded', 0);
-    setAttributeValue('sabs_totalnumberofitemstoadd', 0);
-    setAttributeValue('sabs_batch', '');
+    setAttributeValue('sabs_totalnumberofitemstoadd', 0);    
+      setAttributeValue('sabs_batch', '');
   }
 
   private test() {
@@ -308,6 +308,7 @@ export default class Component extends React.Component<
     let { batch, noofitemsfailed, errors, faileditems } = this.state;
     if (batch.length > 0) {
       noofitemsdeleted = 0;
+      var filter = `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`;
       this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
         //this.setState({ noofitems: items.length });
         this.setState({ noofitemstodelete: items.length });
@@ -526,6 +527,13 @@ export default class Component extends React.Component<
       return fieldObj.schema;
     return ''
   }
+
+  private getFieldfullyqualifiedname = (table: string, field: string): string => {
+    var fieldObj = schemamappings.find((fld: any) => fld.entity == table && fld.fieldname == field);
+    if (fieldObj && fieldObj.fieldfullyqualifiedname && fieldObj.fieldfullyqualifiedname.length > 0)
+      return fieldObj.fieldfullyqualifiedname;
+    return ''
+  }
   private _validate() {
     let {
       data,
@@ -578,9 +586,10 @@ export default class Component extends React.Component<
         // @ts-ignore   
         Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
         batch = 'SABS ' + getLocalDateAndTimeString(new Date);
-        // @ts-ignore    
-        Xrm.Page.getAttribute('sabs_batch').setValue(batch);
-
+        if (getAttributeValue('sabs_addbatch')) 
+          // @ts-ignore    
+          Xrm.Page.getAttribute('sabs_batch').setValue(batch);
+        
         // @ts-ignore
         Xrm.Page._data._entity.save();
 
@@ -642,6 +651,9 @@ export default class Component extends React.Component<
               fieldName = `${schema}@odata.bind`;
               if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
                 fieldName = `${field.schemaname}@odata.bind`;
+              var fieldfullyqualifiedname = this.getFieldfullyqualifiedname(entityName, field.name);
+              if (fieldfullyqualifiedname.length > 0)
+                fieldName = `${fieldfullyqualifiedname}@odata.bind`;
               break;
             case AttributeType.Customer.toString():
               value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
@@ -715,6 +727,10 @@ export default class Component extends React.Component<
                   fieldName = `${schema}@odata.bind`;
                   if (field.targets && field.targets[0] == 'systemuser' && field.schemaname)
                     fieldName = `${field.schemaname}@odata.bind`;
+
+                  var fieldfullyqualifiedname = this.getFieldfullyqualifiedname(entityName, field.name);
+                  if (fieldfullyqualifiedname.length > 0)
+                    fieldName = `${fieldfullyqualifiedname}@odata.bind`;
                   break;
                 case AttributeType.Customer.toString():
                   value = getLookupFieldValue(lookups, fieldName, value, field.targets ? field.targets : []);
@@ -742,7 +758,8 @@ export default class Component extends React.Component<
       });
       if (Object.keys(inputData).length > 0) {
 
-        addPropertyToOobject(inputData, 'sabs_batch', batch)
+        if (getAttributeValue('sabs_addbatch'))
+          addPropertyToOobject(inputData, 'sabs_batch', batch);
 
         this._dataProvider
           .createRecord(entityName, inputData)
@@ -799,9 +816,12 @@ export default class Component extends React.Component<
         Xrm.Page.getAttribute('sabs_tabledisplayname').setValue(entity.text);
         // @ts-ignore   
         Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
-        batch = 'SABS ' + getLocalDateAndTimeString(new Date);
-        // @ts-ignore    
-        Xrm.Page.getAttribute('sabs_batch').setValue(batch);
+
+        if (getAttributeValue('sabs_addbatch')) {
+          batch = 'SABS ' + getLocalDateAndTimeString(new Date);
+          // @ts-ignore    
+          Xrm.Page.getAttribute('sabs_batch').setValue(batch);
+        }
 
         // @ts-ignore
         Xrm.Page._data._entity.save();
@@ -1094,7 +1114,7 @@ export default class Component extends React.Component<
             label: attribute.Label,
             AttributeType: attribute.AttributeType,
             SchemaName: attribute.SchemaName,
-            Targets: schema? [schema.name]: attribute.Targets,
+            Targets: schema ? [schema.name] : attribute.Targets,
           });
         });
 
@@ -1190,7 +1210,7 @@ export default class Component extends React.Component<
             </table>
             <table>
               <tr>
-              <td>                  
+                <td>
                   {batch.length == 0 && !validated && <PrimaryButton text="Validate" onClick={this._validate} allowDisabledFocus />}
                   &nbsp;&nbsp;
                   {batch.length == 0 && validated && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
@@ -1203,9 +1223,9 @@ export default class Component extends React.Component<
                   } &nbsp;&nbsp;
                   {/* <PrimaryButton text="Close Active Cases" onClick={this._closeTable} allowDisabledFocus /> */}
                   <PrimaryButton text="Clear Queue" onClick={this._clearQueue} allowDisabledFocus />
-                  &nbsp;&nbsp;                  
-                  </td>
-                  <td>
+                  &nbsp;&nbsp;
+                </td>
+                <td>
                   <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
@@ -1215,8 +1235,8 @@ export default class Component extends React.Component<
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                 </td>
               </tr>
-              <tr>     
-                <td>           
+              <tr>
+                <td>
                   <Dropdown
                     label="Table"
                     defaultSelectedKey="broccoli"
@@ -1228,8 +1248,8 @@ export default class Component extends React.Component<
                   {/* <input
                 onChange={(value) => this.onTextChange(value, "entityName")}
               /> */}
-                
-                &nbsp;&nbsp;
+
+                  &nbsp;&nbsp;
                 </td>
                 <td>
                   <CSVReader
@@ -1238,9 +1258,9 @@ export default class Component extends React.Component<
                     onFileLoaded={this.handleForce}
                     parserOptions={this.papaparseOptions}
                   />
-                
+
                 </td>
-                
+
               </tr>
             </table>
             <br />

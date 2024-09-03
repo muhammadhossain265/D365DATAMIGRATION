@@ -5,34 +5,46 @@
     },
     {
         "key": "bookableresourcebooking",
-        "text": "Appointment"        
-    },      
+        "text": "Appointment"
+    },
     {
         "key": "sabs_appointmenttype",
-        "text": "Appointment Type"        
-    },      
+        "text": "Appointment Type"
+    },
     {
         "key": "bookableresource",
-        "text": "Bookable Rsource"        
-    },  
+        "text": "Bookable Rsource"
+    },
     {
         "key": "bookingstatus",
-        "text": "Booking Status"        
-    },  
+        "text": "Booking Status"
+    },
     {
         "key": "connection",
-        "text": "Connection"        
-    }, 
+        "text": "Connection"
+    },
     {
         "key": "connectionrole",
-        "text": "Connection Role"        
+        "text": "Connection Role"
     },
+    {
+        "key": "sabs_ndisgoal",
+        "text": "NDIS Goal"
+    },    
+    {
+        "key": "sabs_goal",
+        "text": "Goal"
+    },
+    {
+        "key": "annotation",
+        "text": "Session Note"
+    },    
     {
         "key": "msdyn_workorder",
         "text": "Work Order"
-    },  
+    },
     {
         "key": "msdyn_workordertype",
-        "text": "Work Order Type"        
+        "text": "Work Order Type"
     }
 ]

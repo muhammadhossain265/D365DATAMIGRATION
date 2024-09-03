@@ -33,5 +33,11 @@
         "entity": "connection",
         "fieldname": "record2roleid",
         "schema": "record2roleid"
+    },
+    {
+        "entity": "annotation",
+        "fieldname": "objectid",
+        "fieldfullyqualifiedname": "objectid_account",
+        "schema": "account"
     }
 ]
