@@ -39,5 +39,20 @@
         "fieldname": "objectid",
         "fieldfullyqualifiedname": "objectid_account",
         "schema": "account"
+    },
+    {
+        "entity": "product",
+        "fieldname": "parentproductid",
+        "schema": "parentproductid"
+    },
+    {
+        "entity": "product",
+        "fieldname": "defaultuomscheduleid",
+        "schema": "defaultuomscheduleid"
+    },
+    {
+        "entity": "product",
+        "fieldname": "defaultuomid",
+        "schema": "defaultuomid"
     }
 ]

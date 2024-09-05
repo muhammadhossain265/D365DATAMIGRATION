@@ -34,6 +34,10 @@
     {
         "key": "sabs_goal",
         "text": "Goal"
+    },    
+    {
+        "key": "product",
+        "text": "Product"
     },
     {
         "key": "annotation",

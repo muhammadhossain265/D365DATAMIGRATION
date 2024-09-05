@@ -181,8 +181,8 @@ export default class Component extends React.Component<
 
   private resetAttributes() {
     setAttributeValue('sabs_totalnumberofitemssucceeded', 0);
-    setAttributeValue('sabs_totalnumberofitemstoadd', 0);    
-      setAttributeValue('sabs_batch', '');
+    setAttributeValue('sabs_totalnumberofitemstoadd', 0);
+    setAttributeValue('sabs_batch', '');
   }
 
   private test() {
@@ -306,9 +306,22 @@ export default class Component extends React.Component<
 
   private deleteRecords(entityName: string, entity: any, noofitemssucceeded: number, noofitemsdeleted: number, fields: IField[], noofitems: number) {
     let { batch, noofitemsfailed, errors, faileditems } = this.state;
-    if (batch.length > 0) {
+    var filterConditions = '';
+    var startTime = '';
+    var endTime = '';
+
+    if (batch.length > 0)
+      filterConditions = `?$filter=sabs_batch eq '${batch}'`;
+    else {
+      startTime = getAttributeValue('sabs_starttime');
+      endTime = getAttributeValue('sabs_endtime');
+
+      if (startTime && endTime)
+        filterConditions = `?$filter=createdon ge ${startTime} and createdon le ${endTime}`;
+    }
+    if (filterConditions.length > 0) {
       noofitemsdeleted = 0;
-      var filter = `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`;
+      var filter = filterConditions + '&$top=40&$orderby=modifiedon desc';
       this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
         //this.setState({ noofitems: items.length });
         this.setState({ noofitemstodelete: items.length });
@@ -347,7 +360,7 @@ export default class Component extends React.Component<
       });
       return { noofitemssucceeded, noofitemsdeleted };
     }
-    else alert('Bath number is missing');
+    else alert('Bath number or start & end time is missing');
   }
 
   private _reactivateCases() {
@@ -586,10 +599,10 @@ export default class Component extends React.Component<
         // @ts-ignore   
         Xrm.Page.getAttribute('sabs_tablelogicalname').setValue(entityName);
         batch = 'SABS ' + getLocalDateAndTimeString(new Date);
-        if (getAttributeValue('sabs_addbatch')) 
+        if (getAttributeValue('sabs_addbatch'))
           // @ts-ignore    
           Xrm.Page.getAttribute('sabs_batch').setValue(batch);
-        
+
         // @ts-ignore
         Xrm.Page._data._entity.save();
 
