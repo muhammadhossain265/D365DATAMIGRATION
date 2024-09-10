@@ -260,6 +260,8 @@ export function parseObj(obj: any, files: IField[]) {
     objOut[field.name] = obj[field.name];
     switch (field.AttributeType) {
       case AttributeType.Picklist.toString():
+      case AttributeType.State.toString():
+      case AttributeType.Status.toString():
         objOut[field.name + "text"] = getChoiceFieldValue(obj, field.name);
         break;
       case AttributeType.Boolean.toString():
@@ -282,6 +284,8 @@ export function getGridColumns(fields: IField[]): IColumn[] {
     var fieldName = field.name;
     switch (field.AttributeType) {
       case AttributeType.Picklist.toString():
+      case AttributeType.State.toString():
+      case AttributeType.Status.toString():
         fieldName = field.name + "text";
     }
     return {
@@ -342,7 +346,7 @@ export function isValidClient() {
 }
 
 export function enclosedInQuote(str: string): boolean {
-  return str[0] == "'" && str[str.length - 1] == "'"  
+  return str[0] == "'" && str[str.length - 1] == "'"
 }
 
 export function getCleanString(str: string): string {

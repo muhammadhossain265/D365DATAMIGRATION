@@ -143,6 +143,8 @@ export default class Component extends React.Component<
 
       switch (currentField?.AttributeType) {
         case AttributeType.Picklist.toString():
+        case AttributeType.State.toString():
+        case AttributeType.Status.toString():
           this._dataProvider.getOptions(field.name, entity.ObjectTypeCode).then((result: any) => {
             var ch = choices.find((choice) => choice.key == field.name);
             if (ch) ch.value = result;
@@ -641,8 +643,10 @@ export default class Component extends React.Component<
                 validationfailed += 1;
               break;
             case AttributeType.Picklist.toString():
+            case AttributeType.State.toString():
+            case AttributeType.Status.toString():
               value = getPicklistItemValue(choices, fieldName, value);
-              if (!value || value.length == 0)
+              if (value !== 0 && value !== 1 && (!value || value.length == 0))
                 validationfailed += 1;
               break;
             case AttributeType.Lookup.toString():
@@ -717,6 +721,8 @@ export default class Component extends React.Component<
                   value = getVirtualItemValue(choices, fieldName, value);
                   break;
                 case AttributeType.Picklist.toString():
+                case AttributeType.State.toString():
+                case AttributeType.Status.toString():
                   value = getPicklistItemValue(choices, fieldName, value);
                   break;
                 case AttributeType.Lookup.toString():
@@ -917,6 +923,8 @@ export default class Component extends React.Component<
 
           switch (cdsField.AttributeType) {
             case AttributeType.Picklist.toString():
+            case AttributeType.State.toString():
+            case AttributeType.Status.toString():
             case AttributeType.Virtual.toString():
               var ch = choices.find(
                 choice => choice.key == newfield.name
