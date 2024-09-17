@@ -3,6 +3,7 @@
         "key": "account",
         "text": "Account"
     },
+    
     {
         "key": "bookableresourcebooking",
         "text": "Appointment"
@@ -12,12 +13,21 @@
         "text": "Appointment Type"
     },
     {
+        "key": "sabs_approvalhistory",
+        "text": "Approval History"
+    }  
+    ,
+    {
         "key": "bookableresource",
         "text": "Bookable Rsource"
     },
     {
         "key": "bookingstatus",
         "text": "Booking Status"
+    },
+    {
+        "key": "sabs_budget",
+        "text": "Budget"
     },
     {
         "key": "connection",
@@ -34,11 +44,20 @@
     {
         "key": "sabs_goal",
         "text": "Goal"
-    },    
+    },  
+    {
+        "key": "sabs_ndisplan",
+        "text": "Plan"
+    },  
     {
         "key": "product",
         "text": "Product"
+    }, 
+    {
+        "key": "sabs_room",
+        "text": "Room"
     },
+    
     {
         "key": "annotation",
         "text": "Session Note"
