@@ -69,5 +69,9 @@
     {
         "key": "msdyn_workordertype",
         "text": "Work Order Type"
-    }
+    },
+    {
+        "key": "msdyn_workorderservice",
+        "text": "Work Order Service"
+    }    
 ]
