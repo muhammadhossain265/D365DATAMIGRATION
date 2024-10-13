@@ -3,7 +3,6 @@
         "key": "account",
         "text": "Account"
     },
-    
     {
         "key": "bookableresourcebooking",
         "text": "Appointment"
@@ -15,8 +14,7 @@
     {
         "key": "sabs_approvalhistory",
         "text": "Approval History"
-    }  
-    ,
+    },
     {
         "key": "bookableresource",
         "text": "Bookable Rsource"
@@ -42,30 +40,33 @@
         "text": "Invoice"
     },
     {
+        "key": "invoicedetail",
+        "text": "Invoice Detail"
+    },
+    {
         "key": "sabs_ndisgoal",
         "text": "NDIS Goal"
-    },    
+    },
     {
         "key": "sabs_goal",
         "text": "Goal"
-    },  
+    },
     {
         "key": "sabs_ndisplan",
         "text": "Plan"
-    },  
+    },
     {
         "key": "product",
         "text": "Product"
-    }, 
+    },
     {
         "key": "sabs_room",
         "text": "Room"
     },
-    
     {
         "key": "annotation",
         "text": "Session Note"
-    },    
+    },
     {
         "key": "msdyn_workorder",
         "text": "Work Order"
@@ -77,5 +78,5 @@
     {
         "key": "msdyn_workorderservice",
         "text": "Work Order Service"
-    }    
+    }
 ]
