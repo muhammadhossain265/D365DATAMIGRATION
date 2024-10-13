@@ -38,6 +38,10 @@
         "text": "Connection Role"
     },
     {
+        "key": "invoice",
+        "text": "Invoice"
+    },
+    {
         "key": "sabs_ndisgoal",
         "text": "NDIS Goal"
     },    
