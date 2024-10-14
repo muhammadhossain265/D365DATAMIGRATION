@@ -69,5 +69,25 @@
         "entity": "invoicedetail",
         "fieldname": "uomid",
         "schema": "uomid"
+    },
+    {
+        "entity": "msdyn_workorderservice",
+        "fieldname": "msdyn_booking",
+        "schema": "msdyn_booking"
+    },
+    {
+        "entity": "msdyn_workorderservice",
+        "fieldname": "msdyn_workorder",
+        "schema": "msdyn_workorder"
+    },
+    {
+        "entity": "msdyn_workorderservice",
+        "fieldname": "msdyn_service",
+        "schema": "msdyn_service"
+    },
+    {
+        "entity": "msdyn_workorderservice",
+        "fieldname": "msdyn_unit",
+        "schema": "msdyn_unit"
     }
 ]
