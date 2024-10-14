@@ -54,5 +54,20 @@
         "entity": "product",
         "fieldname": "defaultuomid",
         "schema": "defaultuomid"
+    },
+    {
+        "entity": "invoicedetail",
+        "fieldname": "invoiceid",
+        "schema": "invoiceid"
+    },
+    {
+        "entity": "invoicedetail",
+        "fieldname": "productid",
+        "schema": "productid"
+    },
+    {
+        "entity": "invoicedetail",
+        "fieldname": "uomid",
+        "schema": "uomid"
     }
 ]
