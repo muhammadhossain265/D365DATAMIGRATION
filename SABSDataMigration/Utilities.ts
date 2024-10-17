@@ -225,6 +225,9 @@ export function findLookupValue(lookups: ILookup[],
         case 'systemuser':
           fieldName = 'domainname'
           break;
+        case 'msdyn_workorder':
+          fieldName = '_primaryIdAttribute'
+          break;
         // case 'account':
         // case 'contact':
         //   fieldName = 'emailaddress1'
