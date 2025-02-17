@@ -12,7 +12,7 @@
     {
         "entity": "annotation",
         "fieldname": "objectid",
-        "fieldfullyqualifiedname": "objectid_appointment",
-        "name": "appointment"
+        "fieldfullyqualifiedname": "objectid_bookableresourcebooking",
+        "name": "bookableresourcebooking"
     }
 ]

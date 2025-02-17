@@ -37,8 +37,8 @@
     {
         "entity": "annotation",
         "fieldname": "objectid",
-        "fieldfullyqualifiedname": "objectid_appointment",
-        "schema": "appointment"
+        "fieldfullyqualifiedname": "objectid_bookableresourcebooking",
+        "schema": "bookableresourcebooking"
     },
     {
         "entity": "product",
