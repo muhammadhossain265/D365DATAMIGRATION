@@ -37,8 +37,8 @@
     {
         "entity": "annotation",
         "fieldname": "objectid",
-        "fieldfullyqualifiedname": "objectid_account",
-        "schema": "account"
+        "fieldfullyqualifiedname": "objectid_appointment",
+        "schema": "appointment"
     },
     {
         "entity": "product",
