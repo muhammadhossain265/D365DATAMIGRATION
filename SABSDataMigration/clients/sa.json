@@ -1,0 +1,69 @@
+[
+    {
+        "key": "account",
+        "text": "Account"
+    },
+    {
+        "key": "contact",
+        "text": "Contact"
+    },
+    {
+        "key": "incident",
+        "text": "Case"
+    },
+    {
+        "key": "escosa_licencedetail",
+        "text": "Licence Detail"
+    },
+    {
+        "key": "escosa_officeholder",
+        "text": "Office Holder"
+    },
+    {
+        "key": "escosa_waterconnection",
+        "text": "Water Connection"
+    },
+    {
+        "key": "escosa_licensetier",
+        "text": "License Tier"
+    },
+    {
+        "key": "escosa_feetier",
+        "text": "Fee Tier"
+    },
+    {
+        "key": "escosa_action",
+        "text": "Action"
+    },
+    {
+        "key": "escosa_actionoutcome",
+        "text": "Action Outcome"
+    },
+    {
+        "key": "escosa_actiontemplate",
+        "text": "Action Template"
+    },
+    {
+        "key": "escosa_workflow",
+        "text": "Workflow"
+    },
+    {
+        "key": "escosa_outcome",
+        "text": "Outcome"
+    },
+    {
+        "key": "escosa_template",
+        "text": "Template"
+    },
+    {
+        "key": "escosa_feesetting",
+        "text": "Fee Setting"
+    },
+    
+    {
+        "key": "escosa_invoice",
+        "text": "Invoice"
+    }
+   
+
+]
