@@ -12,6 +12,18 @@
         "text": "Case"
     },
     {
+        "key": "escosa_fee",
+        "text": "Fee"
+    },
+    {
+        "key": "escosa_region",
+        "text": "Region"
+    },
+    {
+        "key": "escosa_otherentity",
+        "text": "Other Entity"
+    },
+    {
         "key": "escosa_licencedetail",
         "text": "Licence Detail"
     },
@@ -22,6 +34,14 @@
     {
         "key": "escosa_waterconnection",
         "text": "Water Connection"
+    },
+    {
+        "key": "escosa_gasconnection",
+        "text": "Gas Connection"
+    },
+    {
+        "key": "escosa_electricityconnection",
+        "text": "Electricity Connection"
     },
     {
         "key": "escosa_licensetier",
@@ -46,6 +66,10 @@
     {
         "key": "escosa_workflow",
         "text": "Workflow"
+    },
+    {
+        "key": "escosa_workflowsetting",
+        "text": "Workflow Setting"
     },
     {
         "key": "escosa_outcome",

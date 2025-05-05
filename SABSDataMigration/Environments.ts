@@ -34,6 +34,10 @@ export const clients: client[] =
     {
         url: "https://escosauat.crm6.dynamics.com/",
         exmpiry: new Date(2025, 12, 12)
+    }, 
+    {
+        url: "https://escosaprod.crm6.dynamics.com/",
+        exmpiry: new Date(2025, 12, 12)
     }
     ];
 

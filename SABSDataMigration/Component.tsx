@@ -44,9 +44,11 @@ import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
 import { table } from "console";
 
-const entities = require("./clients/horizon.json");
+// const entities = require("./clients/horizon.json");
 const schemas = require("./clients/horizon/schemaexceptions.json");
 const schemamappings = require("./clients/horizon/filedexceptions.json");
+
+const entities = require("./clients/sa.json");
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
@@ -765,7 +767,7 @@ export default class Component extends React.Component<
                   value = getBooleanFieldKey(value.toString());
                   break;
                 case AttributeType.DateTime.toString():
-                  var dateonlyfields = ['Due Date', 'Date Completed'];
+                  var dateonlyfields = ['Due Date', 'Date Completed', 'Anniversary Date','Active Reporting Year From','Active Reporting Year To','As At','Date Updated','Obsolete Date','Date Last Varied','Licensed Issued'];
                   if (!dateonlyfields.find(fld => fld == field.label))
                     value = new Date(value);
                   break;
