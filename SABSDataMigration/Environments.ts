@@ -19,10 +19,10 @@ export const clients: client[] =
         exmpiry: new Date(2025, 12, 12)
     }, {
         url: "https://uathorizon.crm6.dynamics.com",
-        exmpiry: new Date(2025, 12, 12)
+        exmpiry: new Date(2026, 12, 12)
     }, {
         url: "https://productionhorizon.crm6.dynamics.com/",
-        exmpiry: new Date(2025, 12, 12)
+        exmpiry: new Date(2026, 12, 12)
     }, {
         url: "https://escosadev.crm6.dynamics.com/",
         exmpiry: new Date(2025, 12, 12)

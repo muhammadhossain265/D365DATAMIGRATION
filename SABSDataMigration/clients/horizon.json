@@ -78,5 +78,13 @@
     {
         "key": "msdyn_workorderservice",
         "text": "Work Order Service"
+    },
+    {
+        "key": "sabs_clientincident",
+        "text": "Client Incident"
+    },
+    {
+        "key": "msdyn_payment",
+        "text": "Payment"
     }
 ]

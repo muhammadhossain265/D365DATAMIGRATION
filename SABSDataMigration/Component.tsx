@@ -44,11 +44,11 @@ import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
 import { table } from "console";
 
-// const entities = require("./clients/horizon.json");
+const entities = require("./clients/horizon.json");
 const schemas = require("./clients/horizon/schemaexceptions.json");
 const schemamappings = require("./clients/horizon/filedexceptions.json");
 
-const entities = require("./clients/sa.json");
+//const entities = require("./clients/sa.json");
 
 export default class Component extends React.Component<
   ComponentFramework.Context<IInputs>,
