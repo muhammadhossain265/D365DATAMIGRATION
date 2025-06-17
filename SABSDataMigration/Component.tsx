@@ -313,6 +313,8 @@ export default class Component extends React.Component<
     var filterConditions = '';
     var startTime = '';
     var endTime = '';
+    var batched = false;
+    batched = getAttributeValue("sabs_addbatch");
 
     if (batch.length > 0)
       filterConditions = `?$filter=sabs_batch eq '${batch}'`;
@@ -321,16 +323,17 @@ export default class Component extends React.Component<
       endTime = getAttributeValue('sabs_endtime');
 
       if (startTime && endTime)
-        filterConditions = `?$filter=createdon ge ${startTime} and createdon le ${endTime}`;
+        filterConditions = `?$filter=createdon ge ${new Date(startTime).toISOString()} and createdon le ${new Date(endTime).toISOString()}`;
     }
     if (filterConditions.length > 0) {
       noofitemsdeleted = 0;
       var filter = filterConditions + '&$top=40&$orderby=modifiedon desc';
-      this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
+      //this._dataProvider.retrieveMultipleRecords(entityName, `?$filter=sabs_batch eq '${batch}'&$top=40&$orderby=modifiedon desc`).then((items) => {
+      this._dataProvider.retrieveMultipleRecords(entityName, filter).then((items) => {
         //this.setState({ noofitems: items.length });
         this.setState({ noofitemstodelete: items.length });
         items.map((item: any) => {
-          if (item["sabs_batch"] && item["sabs_batch"].length > 0 && item["sabs_batch"] == batch) {
+          if (!batched || (item["sabs_batch"] && item["sabs_batch"].length > 0 && item["sabs_batch"] == batch)) {
             setTimeout(() => {
               this._dataProvider
                 .deleteRecord(entityName, item[entity._primaryIdAttribute])
@@ -1238,9 +1241,9 @@ export default class Component extends React.Component<
                   &nbsp;&nbsp;
                   {batch.length == 0 && validated && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
                   &nbsp;&nbsp;
-                  {batch.length > 0 &&
+                  
                     <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
-                  } &nbsp;&nbsp;
+                  
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
