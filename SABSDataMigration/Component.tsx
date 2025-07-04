@@ -279,7 +279,7 @@ export default class Component extends React.Component<
         if (response.length == 0) {
           console.log(`${plan} will be deleted.`, plans);
           if (Boolean(localStorage.getItem('YESDELETE')))
-          this._dataProvider.deleteRecord('sabs_sabsplan', plan).then((result: any) => {
+          this._dataProvider.deleteRecord('sabs_ndisplan', plan).then((result: any) => {
             console.log('Duplicate deleted successfully....');
           })
         }
