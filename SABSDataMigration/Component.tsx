@@ -82,6 +82,7 @@ export default class Component extends React.Component<
     this._clearQueue = this._clearQueue.bind(this);
     this._closecases = this._closecases.bind(this);
     this.test = this.test.bind(this);
+    this.fixPlans = this.fixPlans.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
     this._validate = this._validate.bind(this);
@@ -191,6 +192,7 @@ export default class Component extends React.Component<
 
   private test() {
     var entityname: string = '';
+    var id: string = ''
     var data: any;
 
 
@@ -203,8 +205,16 @@ export default class Component extends React.Component<
         console.log(result);
       });
     }
+
     if (entityname.length > 0 && data) {
       this._dataProvider.createRecord(entityname, data).then((response: any) => {
+        console.log(response);
+      });
+    }
+
+    
+    if (entityname.length > 0 && data && id.length > 0) {
+      this._dataProvider.updateRecord(entityname, id, data).then((response: any) => {
         console.log(response);
       });
     }
@@ -221,6 +231,60 @@ export default class Component extends React.Component<
         console.log(response);
       });
     }
+  }
+
+  private fixPlans() {
+    var entityname: string = 'sabs_ndisplan';
+
+    var options = '?$orderby=_sabs_client_value,sabs_plantype,sabs_startdate,sabs_enddate';
+    if (entityname.length > 0) {
+      this._dataProvider.retrieveMultipleRecords(entityname, options).then((response: any) => {
+        console.log(response);
+        var accountplans: string[] = [];
+        var planStartDate: string = '';
+        var planEndDate: string = '';
+        var planType: string = '';
+
+
+        var acctountid = '';
+        response.map((plan: any) => {
+          if (plan._sabs_client_value && plan.sabs_startdate && plan.sabs_plantype) {
+            if (acctountid != plan._sabs_client_value || planStartDate != plan.sabs_startdate || planEndDate != plan.sabs_enddate || planType != plan.sabs_plantype) {
+              if (accountplans.length > 1) {
+                this._DeletePlan(acctountid, accountplans)
+              }
+              accountplans = [];
+            }            
+            acctountid = plan._sabs_client_value;
+            accountplans.push(plan.sabs_ndisplanid);
+            planStartDate = plan.sabs_startdate;
+            planEndDate = plan.sabs_enddate;
+            planType = plan.sabs_plantype;
+          }
+        });
+
+      });
+
+    }
+  }
+
+  private _DeletePlan(clientid: string, plans: any) {
+    console.log(clientid, plans);
+
+    plans.map((plan: any) => {
+      var options = `?$filter=_sabs_plan_value eq ${plan}`;
+      var entityname = 'sabs_budget';
+      this._dataProvider.retrieveMultipleRecords(entityname, options).then((response: any) => {
+        console.log(response);
+        if (response.length == 0) {
+          console.log(`${plan} will be deleted.`, plans);
+          if (Boolean(localStorage.getItem('YESDELETE')))
+          this._dataProvider.deleteRecord('sabs_sabsplan', plan).then((result: any) => {
+            console.log('Duplicate deleted successfully....');
+          })
+        }
+      });
+    });
   }
 
   private _clearQueue() {
@@ -1259,6 +1323,8 @@ export default class Component extends React.Component<
                   <PrimaryButton text="Reactivate" onClick={() => this._inactivate(true)} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
+                  &nbsp;&nbsp;
+                  <PrimaryButton text="Fix Plans" onClick={this.fixPlans} allowDisabledFocus />
                 </td>
               </tr>
               <tr>
