@@ -10,6 +10,10 @@
     {
         "key": "incident",
         "text": "Case"
+    },    
+    {
+        "key": "template",
+        "text": "Email Template"
     },
     {
         "key": "escosa_fee",
