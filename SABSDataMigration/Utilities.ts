@@ -335,8 +335,7 @@ export function getAttributeValue(name: string): any {
   }
 }
 export function isValidClient() {
-  var url = window.location.href;
-  console.log(clients);
+  var url = window.location.href;  
   var validclient = clients.find(client => url.includes(client.url));
   console.log(validclient);
   if (validclient) {

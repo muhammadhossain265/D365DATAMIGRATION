@@ -43,6 +43,7 @@ import { text } from "stream/consumers";
 import { fail } from "assert";
 import { exportExcelCS } from "./xlsxutilities";
 import { table } from "console";
+import { updateBudgetDatesUtil } from "./CDSUtiliteis";
 
 const entities = require("./clients/horizon.json");
 const schemas = require("./clients/horizon/schemaexceptions.json");
@@ -83,6 +84,7 @@ export default class Component extends React.Component<
     this._closecases = this._closecases.bind(this);
     this.test = this.test.bind(this);
     this.fixPlans = this.fixPlans.bind(this);
+    this.updateBudgetDates = this.updateBudgetDates.bind(this);
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
     this._validate = this._validate.bind(this);
@@ -231,6 +233,10 @@ export default class Component extends React.Component<
         console.log(response);
       });
     }
+  }
+
+  private updateBudgetDates() {
+    updateBudgetDatesUtil(this._dataProvider);
   }
 
   private fixPlans() {
@@ -1316,15 +1322,21 @@ export default class Component extends React.Component<
                   &nbsp;&nbsp;
                 </td>
                 <td>
-                  <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
+                 {/*  <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Reactivate" onClick={() => this._inactivate(true)} allowDisabledFocus />
                   &nbsp;&nbsp;
+                  */}
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                   &nbsp;&nbsp;
-                  <PrimaryButton text="Fix Plans" onClick={this.fixPlans} allowDisabledFocus />
+                  
+                   {/*<PrimaryButton text="Fix Plans" onClick={this.fixPlans} allowDisabledFocus />
+                  
+                   &nbsp;&nbsp;
+                   */}
+                  <PrimaryButton text="Update Budget Date" onClick={this.updateBudgetDates} allowDisabledFocus />
                 </td>
               </tr>
               <tr>
