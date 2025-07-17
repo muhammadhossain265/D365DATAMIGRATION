@@ -85,6 +85,7 @@ export default class Component extends React.Component<
     this.test = this.test.bind(this);
     this.fixPlans = this.fixPlans.bind(this);
     this.updateBudgetDates = this.updateBudgetDates.bind(this);
+    this._getEntityMetaData = this._getEntityMetaData.bind(this);    
     this._onTargetChanged = this._onTargetChanged.bind(this);
     this._updatecsvFieldLabels = this._updatecsvFieldLabels.bind(this);
     this._validate = this._validate.bind(this);
@@ -214,7 +215,7 @@ export default class Component extends React.Component<
       });
     }
 
-    
+
     if (entityname.length > 0 && data && id.length > 0) {
       this._dataProvider.updateRecord(entityname, id, data).then((response: any) => {
         console.log(response);
@@ -235,6 +236,15 @@ export default class Component extends React.Component<
     }
   }
 
+
+  private _getEntityMetaData() {
+    var entityName = "";
+    this._dataProvider
+      .getEntityMetadata(entityName, [])
+      .then(result => {
+        console.log(result);
+      });
+  }
   private updateBudgetDates() {
     updateBudgetDatesUtil(this._dataProvider);
   }
@@ -260,7 +270,7 @@ export default class Component extends React.Component<
                 this._DeletePlan(acctountid, accountplans)
               }
               accountplans = [];
-            }            
+            }
             acctountid = plan._sabs_client_value;
             accountplans.push(plan.sabs_ndisplanid);
             planStartDate = plan.sabs_startdate;
@@ -285,9 +295,9 @@ export default class Component extends React.Component<
         if (response.length == 0) {
           console.log(`${plan} will be deleted.`, plans);
           if (Boolean(localStorage.getItem('YESDELETE')))
-          this._dataProvider.deleteRecord('sabs_ndisplan', plan).then((result: any) => {
-            console.log('Duplicate deleted successfully....');
-          })
+            this._dataProvider.deleteRecord('sabs_ndisplan', plan).then((result: any) => {
+              console.log('Duplicate deleted successfully....');
+            })
         }
       });
     });
@@ -840,7 +850,7 @@ export default class Component extends React.Component<
                   value = getBooleanFieldKey(value.toString());
                   break;
                 case AttributeType.DateTime.toString():
-                  var dateonlyfields = ['Due Date', 'Date Completed', 'Anniversary Date','Active Reporting Year From','Active Reporting Year To','As At','Date Updated','Obsolete Date','Date Last Varied','Licensed Issued'];
+                  var dateonlyfields = ['Due Date', 'Date Completed', 'Anniversary Date', 'Active Reporting Year From', 'Active Reporting Year To', 'As At', 'Date Updated', 'Obsolete Date', 'Date Last Varied', 'Licensed Issued'];
                   if (!dateonlyfields.find(fld => fld == field.label))
                     value = new Date(value);
                   break;
@@ -1311,9 +1321,9 @@ export default class Component extends React.Component<
                   &nbsp;&nbsp;
                   {batch.length == 0 && validated && <PrimaryButton text="Import to CDS" onClick={this.importToCDS} allowDisabledFocus />}
                   &nbsp;&nbsp;
-                  
-                    <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
-                  
+
+                  <PrimaryButton text="Clear Table" onClick={this.clearTable} allowDisabledFocus />
+
                   {batch.length > 0 && faileditems.length > 0 &&
                     <PrimaryButton text="Export Error" onClick={this._exporterror} allowDisabledFocus />
                   } &nbsp;&nbsp;
@@ -1322,7 +1332,7 @@ export default class Component extends React.Component<
                   &nbsp;&nbsp;
                 </td>
                 <td>
-                 {/*  <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
+                  {/*  <PrimaryButton text="Reactivate Cases" onClick={this._reactivateCases} allowDisabledFocus />
                   &nbsp;&nbsp;
                   <PrimaryButton text="Inactivate" onClick={() => this._inactivate} allowDisabledFocus />
                   &nbsp;&nbsp;
@@ -1331,12 +1341,12 @@ export default class Component extends React.Component<
                   */}
                   <PrimaryButton text="Test" onClick={this.test} allowDisabledFocus />
                   &nbsp;&nbsp;
-                  
-                   {/*<PrimaryButton text="Fix Plans" onClick={this.fixPlans} allowDisabledFocus />
+
+                  {/*<PrimaryButton text="Fix Plans" onClick={this.fixPlans} allowDisabledFocus />
                   
                    &nbsp;&nbsp;
                    */}
-                  <PrimaryButton text="Update Budget Date" onClick={this.updateBudgetDates} allowDisabledFocus />
+                  <PrimaryButton text="Get Metadata" onClick={this._getEntityMetaData} allowDisabledFocus />
                 </td>
               </tr>
               <tr>
