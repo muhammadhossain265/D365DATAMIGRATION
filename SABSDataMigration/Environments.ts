@@ -43,6 +43,18 @@ export const clients: client[] =
     {
         url: "https://ndissupport.api.crm6.dynamics.com/",
         exmpiry: new Date(2026, 12, 12)
+    }, 
+    {
+        url: "https://iloradev.crm6.dynamics.com/",
+        exmpiry: new Date(2026, 12, 12)
+    }, 
+    {
+        url: "https://ilorauat.crm6.dynamics.com/",
+        exmpiry: new Date(2026, 12, 12)
+    }, 
+    {
+        url: "https://iloraprod.crm6.dynamics.com/",
+        exmpiry: new Date(2026, 12, 12)
     }
     ];
 
