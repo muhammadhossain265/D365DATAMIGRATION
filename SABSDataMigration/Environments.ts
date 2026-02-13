@@ -16,7 +16,7 @@ export const clients: client[] =
         exmpiry: new Date(2023, 10, 11)
     }, {
         url: "https://therapy.crm6.dynamics.com",
-        exmpiry: new Date(2025, 12, 12)
+        exmpiry: new Date(2026, 6, 12)
     }, {
         url: "https://uathorizon.crm6.dynamics.com",
         exmpiry: new Date(2026, 12, 12)
@@ -38,6 +38,11 @@ export const clients: client[] =
     {
         url: "https://escosaprod.crm6.dynamics.com/",
         exmpiry: new Date(2025, 12, 12)
+    }
+    , 
+    {
+        url: "https://ndissupport.api.crm6.dynamics.com/",
+        exmpiry: new Date(2026, 12, 12)
     }
     ];
 

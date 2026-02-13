@@ -20,6 +20,10 @@
         "text": "Bookable Rsource"
     },
     {
+        "key": "sabs_sessionnote",
+        "text": "Session Note Horizon"
+    },
+    {
         "key": "bookingstatus",
         "text": "Booking Status"
     },
@@ -42,6 +46,15 @@
     {
         "key": "invoicedetail",
         "text": "Invoice Detail"
+    },
+    
+    {
+        "key": "productpricelevel",
+        "text": "Price List Item"
+    },
+     {
+        "key": "productpricelevel",
+        "text": "Price List Item"
     },
     {
         "key": "sabs_ndisgoal",
