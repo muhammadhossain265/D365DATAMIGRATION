@@ -89,5 +89,32 @@
         "entity": "msdyn_workorderservice",
         "fieldname": "msdyn_unit",
         "schema": "msdyn_unit"
+    },
+    {
+        "entity": "productpricelevel",
+        "fieldname": "productid",
+        "schema": "productid"
+    },
+    {
+        "entity": "productpricelevel",
+        "fieldname": "pricelevelid",
+        "schema": "pricelevelid"
+    },
+    {
+        "entity": "productpricelevel",
+        "fieldname": "uomid",
+        "schema": "uomid"
+    },
+    {
+        "entity": "productpricelevel",
+        "fieldname": "uomscheduleid",
+        "schema": "uomscheduleid"
     }
+    ,
+    {
+        "entity": "productpricelevel",
+        "fieldname": "transactioncurrencyid",
+        "schema": "transactioncurrencyid"
+    }
+    
 ]
