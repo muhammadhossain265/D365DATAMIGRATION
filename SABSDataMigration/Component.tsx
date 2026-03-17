@@ -223,7 +223,8 @@ export default class Component extends React.Component<
     }
 
     if (entityname.length > 0) {
-      this._dataProvider.retrieveMultipleRecords(entityname).then((response: any) => {
+      var options: string = '';
+      this._dataProvider.retrieveMultipleRecords(entityname, options).then((response: any) => {
         console.log(response);
       });
     }
